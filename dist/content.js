@@ -5,6 +5,7 @@ const defaultSettings = {
   hidePromoted: false,
   hideLinkedInNews: false,
   hidePuzzles: false,
+  transparentMode: false,
 };
 
 let currentSettings = { ...defaultSettings };
@@ -20,7 +21,7 @@ function init() {
     currentSettings = settings;
     waitForFeed();
     waitForSidebarWidget('LinkedIn News', 'a[href*="/news/story/"]', 'news');
-    waitForSidebarWidget("Today's puzzles", 'a[href*="/games/"]', 'puzzles');
+    waitForSidebarWidget("Today\u2019s puzzles", 'a[href*="/games/"]', 'puzzles');
   });
 }
 
@@ -73,7 +74,12 @@ function observeFeed(feed) {
 
   feedObserver = new MutationObserver(() => {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => applyFeedFilters(feed), 100);
+    debounceTimer = setTimeout(() => {
+      applyFeedFilters(feed);
+      // New posts render content asynchronously; retry after short delays
+      // to catch "Suggested"/"Promoted" labels that appear after the node is inserted.
+      [500, 1500].forEach((delay) => { setTimeout(() => applyFeedFilters(feed), delay); });
+    }, 100);
   });
 
   // subtree catches content loading inside newly added post skeletons
@@ -169,32 +175,63 @@ function isPromotedPost(postEl) {
   );
 }
 
+function applyPostStyle(post, type) {
+  post.dataset.lfrHidden = type;
+  if (currentSettings.transparentMode) {
+    post.style.display = '';
+    post.style.opacity = '0.15';
+    post.style.outline = type === 'suggested'
+      ? '2px solid rgba(0, 100, 255, 0.4)'
+      : '2px solid rgba(220, 0, 0, 0.4)';
+    post.style.backgroundColor = type === 'suggested'
+      ? 'rgba(0, 100, 255, 0.06)'
+      : 'rgba(220, 0, 0, 0.06)';
+  } else {
+    post.style.display = 'none';
+    post.style.opacity = '';
+    post.style.outline = '';
+    post.style.backgroundColor = '';
+  }
+}
+
+function clearPostStyle(post) {
+  delete post.dataset.lfrHidden;
+  post.style.display = '';
+  post.style.opacity = '';
+  post.style.outline = '';
+  post.style.backgroundColor = '';
+}
+
 function hideSuggestedPost(post) {
-  if (post.dataset.lfrHidden === 'suggested') return;
-  console.log('[LFR] Hiding suggested post:', post);
-  post.dataset.lfrHidden = 'suggested';
-  post.style.display = 'none';
+  if (post.dataset.lfrHidden === 'suggested') {
+    // Re-apply in case transparentMode changed
+    applyPostStyle(post, 'suggested');
+    return;
+  }
+  console.log('[LFR] Filtering suggested post:', post);
+  applyPostStyle(post, 'suggested');
 }
 
 function showSuggestedPost(post) {
   if (post.dataset.lfrHidden !== 'suggested') return;
   console.log('[LFR] Showing suggested post:', post);
-  delete post.dataset.lfrHidden;
-  post.style.display = '';
+  clearPostStyle(post);
 }
 
 function hidePromotedPost(post) {
-  if (post.dataset.lfrHidden === 'promoted') return;
-  console.log('[LFR] Hiding promoted post:', post);
-  post.dataset.lfrHidden = 'promoted';
-  post.style.display = 'none';
+  if (post.dataset.lfrHidden === 'promoted') {
+    // Re-apply in case transparentMode changed
+    applyPostStyle(post, 'promoted');
+    return;
+  }
+  console.log('[LFR] Filtering promoted post:', post);
+  applyPostStyle(post, 'promoted');
 }
 
 function showPromotedPost(post) {
   if (post.dataset.lfrHidden !== 'promoted') return;
   console.log('[LFR] Showing promoted post:', post);
-  delete post.dataset.lfrHidden;
-  post.style.display = '';
+  clearPostStyle(post);
 }
 
 // ---------------------------------------------------------------------------
@@ -209,7 +246,7 @@ chrome.runtime.onMessage.addListener((message) => {
     const newsWidget = findSidebarWidget('LinkedIn News', 'a[href*="/news/story/"]');
     if (newsWidget) applySidebarWidget(newsWidget, 'news');
 
-    const puzzlesWidget = findSidebarWidget("Today's puzzles", 'a[href*="/games/"]');
+    const puzzlesWidget = findSidebarWidget("Today\u2019s puzzles", 'a[href*="/games/"]');
     if (puzzlesWidget) applySidebarWidget(puzzlesWidget, 'puzzles');
   }
 });
