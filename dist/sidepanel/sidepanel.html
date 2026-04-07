@@ -65,18 +65,13 @@
       </label>
     </section>
     <section class="filter-group">
-      <h2>Debug</h2>
+      <h2>Display Mode</h2>
 
-      <label class="toggle-row" for="toggle-transparent">
-        <span class="toggle-label">
-          <span class="toggle-title">Transparent mode</span>
-          <span class="toggle-description">Show filtered posts at low opacity instead of hiding them</span>
-        </span>
-        <div class="toggle-switch">
-          <input type="checkbox" id="toggle-transparent" />
-          <span class="slider"></span>
-        </div>
-      </label>
+      <div class="chip-row" role="radiogroup" aria-label="Filtered post display mode">
+        <button type="button" class="chip" role="radio" data-mode="transparent" aria-checked="true">Transparent</button>
+        <button type="button" class="chip" role="radio" data-mode="hidden" aria-checked="false">Hidden</button>
+      </div>
+      <p class="chip-description">Transparent shows filtered posts dimmed for debugging. Hidden removes them entirely.</p>
     </section>
   </main>
 

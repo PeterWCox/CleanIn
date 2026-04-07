@@ -5,13 +5,25 @@ const defaultSettings = {
   hidePromoted: false,
   hideLinkedInNews: false,
   hidePuzzles: false,
-  transparentMode: false,
+  transparentMode: true,
 };
 
 let currentSettings = { ...defaultSettings };
 let feedObserver = null;
-let debounceTimer = null;
-let debounceMaxTimer = null;
+let feedInterval = null;
+let applyDebounceTimer = null;
+
+function getFeed() {
+  return document.querySelector('[data-component-type="LazyColumn"]');
+}
+
+function scheduleApply() {
+  if (applyDebounceTimer) return;
+  applyDebounceTimer = setTimeout(() => {
+    applyDebounceTimer = null;
+    applyFeedFilters();
+  }, 150);
+}
 
 // ---------------------------------------------------------------------------
 // Initialisation
@@ -49,54 +61,41 @@ function loadSettings() {
 // ---------------------------------------------------------------------------
 
 function waitForFeed() {
-  const feed = document.querySelector('[data-component-type="LazyColumn"]');
+  const feed = getFeed();
   if (feed) {
     console.log('[LFR] Feed container found, attaching observer.');
-    observeFeed(feed);
-    applyFeedFilters(feed);
+    attachFeedObserver();
+    applyFeedFilters();
     return;
   }
 
   const poll = setInterval(() => {
-    const feed = document.querySelector('[data-component-type="LazyColumn"]');
-    if (feed) {
+    if (getFeed()) {
       clearInterval(poll);
       console.log('[LFR] Feed container found (after poll), attaching observer.');
-      observeFeed(feed);
-      applyFeedFilters(feed);
-      // Retry to catch posts that finish rendering after the feed appears
-      [500, 1500, 3000].forEach((delay) => { setTimeout(() => applyFeedFilters(feed), delay); });
+      attachFeedObserver();
+      applyFeedFilters();
     }
   }, 500);
 }
 
-function observeFeed(feed) {
+function attachFeedObserver() {
   if (feedObserver) feedObserver.disconnect();
+  if (feedInterval) clearInterval(feedInterval);
 
-  feedObserver = new MutationObserver(() => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      clearTimeout(debounceMaxTimer);
-      debounceMaxTimer = null;
-      applyFeedFilters(feed);
-      // New posts render content asynchronously; retry after increasing delays
-      // to catch "Suggested"/"Promoted" labels that appear after the node is inserted.
-      [500, 1500, 3000, 5000].forEach((delay) => { setTimeout(() => applyFeedFilters(feed), delay); });
-    }, 100);
+  // Observe the whole document body so we survive LinkedIn replacing
+  // the LazyColumn container during SPA navigation / feed refreshes.
+  feedObserver = new MutationObserver(scheduleApply);
+  feedObserver.observe(document.body, { childList: true, subtree: true });
 
-    // maxWait: if mutations are continuous (e.g. LinkedIn lazy-loading images),
-    // the debounce above never fires. Force a run within 500ms regardless.
-    if (!debounceMaxTimer) {
-      debounceMaxTimer = setTimeout(() => {
-        clearTimeout(debounceTimer);
-        debounceMaxTimer = null;
-        applyFeedFilters(feed);
-        [500, 1500, 3000].forEach((delay) => { setTimeout(() => applyFeedFilters(feed), delay); });
-      }, 500);
-    }
+  // Safety-net interval: catches anything the observer debounce misses.
+  feedInterval = setInterval(applyFeedFilters, 2000);
+
+  // Apply a few times shortly after attach to handle posts that render
+  // asynchronously after the container exists.
+  [100, 500, 1500, 3000].forEach((ms) => {
+    setTimeout(applyFeedFilters, ms);
   });
-
-  feedObserver.observe(feed, { childList: true, subtree: true });
 }
 
 // ---------------------------------------------------------------------------
@@ -161,10 +160,10 @@ function applySidebarWidget(widget, key) {
 // Feed filter application
 // ---------------------------------------------------------------------------
 
-function applyFeedFilters(feed) {
-  const posts = feed
-    ? [...feed.children]
-    : [...(document.querySelector('[data-component-type="LazyColumn"]')?.children ?? [])];
+function applyFeedFilters() {
+  const feed = getFeed();
+  if (!feed) return;
+  const posts = [...feed.children];
 
   posts.forEach((post) => {
     if (isSuggestedPost(post)) {
