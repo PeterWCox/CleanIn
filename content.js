@@ -20,8 +20,18 @@ function init() {
     currentSettings = settings;
     waitForFeed();
     waitForSidebarWidget('LinkedIn News', 'a[href*="/news/story/"]', 'news');
-    waitForSidebarWidget("Today's puzzles", 'a[href*="/games/"]', 'puzzles');
+    waitForSidebarWidget("Today\u2019s puzzles", 'a[href*="/games/"]', 'puzzles');
   });
+}
+
+// Re-run init on SPA navigation (LinkedIn swaps content without a full page reload)
+function setupNavigationListener() {
+  const originalPushState = history.pushState.bind(history);
+  history.pushState = (...args) => {
+    originalPushState(...args);
+    setTimeout(init, 300);
+  };
+  window.addEventListener('popstate', () => setTimeout(init, 300));
 }
 
 function loadSettings() {
@@ -52,6 +62,8 @@ function waitForFeed() {
       console.log('[LFR] Feed container found (after poll), attaching observer.');
       observeFeed(feed);
       applyFeedFilters(feed);
+      // Retry to catch posts that finish rendering after the feed appears
+      [500, 1500].forEach((delay) => { setTimeout(() => applyFeedFilters(feed), delay); });
     }
   }, 500);
 }
@@ -197,7 +209,7 @@ chrome.runtime.onMessage.addListener((message) => {
     const newsWidget = findSidebarWidget('LinkedIn News', 'a[href*="/news/story/"]');
     if (newsWidget) applySidebarWidget(newsWidget, 'news');
 
-    const puzzlesWidget = findSidebarWidget("Today's puzzles", 'a[href*="/games/"]');
+    const puzzlesWidget = findSidebarWidget("Today\u2019s puzzles", 'a[href*="/games/"]');
     if (puzzlesWidget) applySidebarWidget(puzzlesWidget, 'puzzles');
   }
 });
@@ -207,3 +219,4 @@ chrome.runtime.onMessage.addListener((message) => {
 // ---------------------------------------------------------------------------
 
 init();
+setupNavigationListener();
