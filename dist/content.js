@@ -86,10 +86,14 @@ function waitForSortBar() {
 }
 
 const ACCORDION_FIELDS = [
-  { key: 'hideSuggested', label: 'Hide Suggested' },
-  { key: 'hidePromoted', label: 'Hide Promoted' },
-  { key: 'hideLinkedInNews', label: 'Hide LinkedIn News' },
-  { key: 'hidePuzzles', label: 'Hide Puzzles' },
+  { section: 'MAIN CONTENT', fields: [
+    { key: 'hideSuggested', label: 'Hide Suggested' },
+    { key: 'hidePromoted', label: 'Hide Promoted' },
+  ]},
+  { section: 'SIDEBAR', fields: [
+    { key: 'hideLinkedInNews', label: 'Hide LinkedIn News' },
+    { key: 'hidePuzzles', label: 'Hide Puzzles' },
+  ]},
 ];
 
 function injectAccordion(navList) {
@@ -156,11 +160,15 @@ function injectAccordion(navList) {
     <div class="lfr-popover" role="dialog" aria-label="Feed Reducer settings">
       <div class="lfr-title">Feed Reducer</div>
       ${ACCORDION_FIELDS.map(
-        (f) => `
-        <label class="lfr-row">
-          <span>${f.label}</span>
-          <input type="checkbox" data-lfr-key="${f.key}" />
-        </label>`
+        (group) => `
+        <div class="lfr-section-label">${group.section}</div>
+        ${group.fields.map(
+          (f) => `
+          <label class="lfr-row">
+            <span>${f.label}</span>
+            <input type="checkbox" data-lfr-key="${f.key}" />
+          </label>`
+        ).join('')}`
       ).join('')}
       <div class="lfr-section-label">Display Mode</div>
       <div class="lfr-chips">
@@ -350,17 +358,62 @@ function applySidebarWidget(widget, key) {
     (key === 'news' && currentSettings.hideLinkedInNews) ||
     (key === 'puzzles' && currentSettings.hidePuzzles);
 
+  // The widget element may be nested; find the top-level card container.
+  const card = findCardContainer(widget);
+
   if (shouldHide) {
-    if (widget.dataset.lfrHidden === key) return;
+    if (widget.dataset.lfrHidden === key) {
+      // Re-apply in case transparentMode changed
+      applyWidgetStyle(card, 'promoted');
+      return;
+    }
     console.log(`[LFR] Hiding sidebar widget: ${key}`);
     widget.dataset.lfrHidden = key;
-    widget.style.display = 'none';
+    applyWidgetStyle(card, 'promoted');
   } else {
     if (widget.dataset.lfrHidden !== key) return;
     console.log(`[LFR] Showing sidebar widget: ${key}`);
     delete widget.dataset.lfrHidden;
-    widget.style.display = '';
+    clearWidgetStyle(card);
   }
+}
+
+function findCardContainer(el) {
+  // Walk up to find the card wrapper (usually a div with padding, border, shadow).
+  let current = el;
+  while (current && current !== document.body) {
+    const parent = current.parentElement;
+    if (!parent) return current;
+    // If parent is a generic container (e.g., another div/section), keep walking.
+    // Stop when we find a reasonable card boundary (e.g., has siblings that are other cards).
+    if (parent.children.length === 1 && parent === current.parentElement) {
+      current = parent;
+    } else {
+      break;
+    }
+  }
+  return current;
+}
+
+function applyWidgetStyle(element) {
+  if (currentSettings.transparentMode) {
+    element.style.display = 'block';
+    element.style.opacity = '0.4';
+    element.style.outline = '2px solid rgba(220, 0, 0, 0.4)';
+    element.style.backgroundColor = 'rgba(220, 0, 0, 0.06)';
+  } else {
+    element.style.display = 'none';
+    element.style.opacity = '';
+    element.style.outline = '';
+    element.style.backgroundColor = '';
+  }
+}
+
+function clearWidgetStyle(element) {
+  element.style.display = '';
+  element.style.opacity = '';
+  element.style.outline = '';
+  element.style.backgroundColor = '';
 }
 
 // ---------------------------------------------------------------------------
