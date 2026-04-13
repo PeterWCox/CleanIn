@@ -4,6 +4,8 @@
 
 LinkedIn is a great place to find a job, reconnect with old colleagues, and read a 14-paragraph post about how someone's toddler taught them about Q3 KPIs. This extension helps with the first two.
 
+![Feed Reducer Demo](screenshots/demo.png)
+
 ## What it does
 
 - **Hides "Suggested" posts** — the ones LinkedIn picks for you because someone you met at a conference in 2017 liked them.
