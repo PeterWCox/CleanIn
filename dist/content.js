@@ -1,10 +1,10 @@
 // CleanIn — content script
 
 const defaultSettings = {
-  hideSuggested: false,
-  hidePromoted: false,
-  hideLinkedInNews: false,
-  hidePuzzles: false,
+  hideSuggested: true,
+  hidePromoted: true,
+  hideLinkedInNews: true,
+  hidePuzzles: true,
   transparentMode: true,
 };
 

@@ -26,19 +26,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 function notifyLinkedInTabs(settings) {
-  chrome.tabs.query({ url: ["https://www.linkedin.com/feed/*", "https://www.linkedin.com/"] }, (tabs) => {
-    for (const tab of tabs) {
-      chrome.tabs.sendMessage(tab.id, { type: "SETTINGS_UPDATED", settings }).catch(() => {
-        // Tab may not have content script loaded yet — safe to ignore
-      });
+  chrome.tabs.query(
+    {
+      url: [
+        "https://www.linkedin.com/feed",
+        "https://www.linkedin.com/feed/",
+        "https://www.linkedin.com/feed/*",
+      ],
+    },
+    (tabs) => {
+      for (const tab of tabs) {
+        chrome.tabs.sendMessage(tab.id, { type: "SETTINGS_UPDATED", settings }).catch(() => {
+          // Tab may not have content script loaded yet — safe to ignore
+        });
+      }
     }
-  });
+  );
 }
 
 const defaultSettings = {
-  hideSuggested: false,
-  hidePromoted: false,
-  hideLinkedInNews: false,
-  hidePuzzles: false,
-  transparentMode: false,
+  hideSuggested: true,
+  hidePromoted: true,
+  hideLinkedInNews: true,
+  hidePuzzles: true,
+  transparentMode: true,
 };

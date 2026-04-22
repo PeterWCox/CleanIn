@@ -5,10 +5,10 @@ const togglePuzzles = document.getElementById('toggle-puzzles');
 const chips = [...document.querySelectorAll('.chip[data-mode]')];
 
 const defaultSettings = {
-  hideSuggested: false,
-  hidePromoted: false,
-  hideLinkedInNews: false,
-  hidePuzzles: false,
+  hideSuggested: true,
+  hidePromoted: true,
+  hideLinkedInNews: true,
+  hidePuzzles: true,
   transparentMode: true,
 };
 
