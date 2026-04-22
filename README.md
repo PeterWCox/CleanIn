@@ -1,4 +1,4 @@
-# Overview
+## Overview
 CleanIn is a simple chrome extension that hides suggested and promoted LinkedIn feed posts you never asked to see. 
 
 ![CleanIn demo](screenshots/cleanin-demo.png)

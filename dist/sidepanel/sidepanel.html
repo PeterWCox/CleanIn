@@ -7,13 +7,9 @@
   <link rel="stylesheet" href="sidepanel.css" />
 </head>
 <body>
-  <header>
-    <img src="../icons/icon48.png" alt="" class="logo" />
-    <h1>CleanIn</h1>
-  </header>
-
   <main>
-    <section class="filter-group">
+    <div class="settings-card">
+    <section class="filter-section">
       <h2>Main Content</h2>
 
       <label class="toggle-row" for="toggle-suggested">
@@ -39,7 +35,7 @@
       </label>
     </section>
 
-    <section class="filter-group">
+    <section class="filter-section">
       <h2>Sidebar</h2>
 
       <label class="toggle-row" for="toggle-linkedin-news">
@@ -64,7 +60,7 @@
         </div>
       </label>
     </section>
-    <section class="filter-group">
+    <section class="filter-section">
       <h2>Display Mode</h2>
 
       <div class="chip-row" role="radiogroup" aria-label="Filtered post display mode">
@@ -73,6 +69,7 @@
       </div>
       <p class="chip-description">Transparent shows filtered posts dimmed for debugging. Hidden removes them entirely.</p>
     </section>
+    </div>
   </main>
 
   <script src="sidepanel.js"></script>
