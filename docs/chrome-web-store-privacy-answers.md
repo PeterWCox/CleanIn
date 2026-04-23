@@ -1,12 +1,12 @@
 # Chrome Web Store — Privacy tab answers (CleanIn)
 
-Copy you can paste into the Chrome Web Store **Privacy** tab. Written to match a packaged manifest with side panel, storage, and LinkedIn feed host permissions only (no `activeTab` unless you add it back).
+Copy you can paste into the Chrome Web Store **Privacy** tab. Written to match a packaged manifest with side panel, storage, and host permissions limited to the LinkedIn home page and feed URLs only (no `activeTab` unless you add it back).
 
 ---
 
 ## Single purpose description
 
-CleanIn has one job: make the LinkedIn feed page easier to read by hiding feed clutter the user does not want (for example suggested posts, promoted posts, and optional sections such as news or puzzles), using on-device rules the user controls in the extension’s side panel. It does not change LinkedIn outside the feed URL it is allowed to run on, and it does not perform unrelated functions.
+CleanIn has one job: make the LinkedIn home/feed experience easier to read by hiding feed clutter the user does not want (for example suggested posts, promoted posts, and optional sections such as news or puzzles), using on-device rules the user controls in the extension’s side panel. It does not change LinkedIn outside the specific home page and feed URLs it is allowed to run on, and it does not perform unrelated functions.
 
 ---
 
@@ -26,7 +26,7 @@ Settings (which categories to hide and display preferences) are saved with `chro
 
 If the packaged manifest only lists `sidePanel` and `storage`, and the dashboard still asks for `activeTab`, either re-upload the package so it matches the manifest, or add this only if you actually request that permission:
 
-*Not used in the current version; content scripts are limited to `https://www.linkedin.com/feed*` via host permissions, so `activeTab` is unnecessary.*
+*Not used in the current version; content scripts are limited to `https://www.linkedin.com/` and `https://www.linkedin.com/feed*` via host permissions, so `activeTab` is unnecessary.*
 
 If you **remove** `activeTab` from the uploaded extension, that field may disappear from the form.
 
@@ -34,7 +34,7 @@ If you **remove** `activeTab` from the uploaded extension, that field may disapp
 
 ## Host permission justification
 
-Host access is limited to `https://www.linkedin.com/feed` (and path variants). That is where the feed content script runs so it can observe the feed and hide matching UI nodes according to saved settings. The extension does not request broad `<all_urls>` access; it only targets the LinkedIn feed URLs needed for this single purpose.
+Host access is limited to `https://www.linkedin.com/` and `https://www.linkedin.com/feed` (and feed path variants). That is where the content script runs so it can observe the LinkedIn home/feed experience and hide matching UI nodes according to saved settings. The extension does not request broad `<all_urls>` access; it only targets the specific LinkedIn URLs needed for this single purpose.
 
 ---
 
