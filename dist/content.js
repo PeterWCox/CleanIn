@@ -3,9 +3,10 @@
 const defaultSettings = {
   hideSuggested: true,
   hidePromoted: true,
+  hidePromotedBy: true,
   hideLinkedInNews: true,
   hidePuzzles: true,
-  transparentMode: true,
+  transparentMode: false,
 };
 
 let currentSettings = { ...defaultSettings };
@@ -13,8 +14,49 @@ let feedObserver = null;
 let feedInterval = null;
 let applyDebounceTimer = null;
 
+const FILTER_STYLES = {
+  suggested: {
+    outline: '2px solid rgba(0, 100, 255, 0.4)',
+    backgroundColor: 'rgba(0, 100, 255, 0.06)',
+  },
+  promoted: {
+    outline: '2px solid rgba(220, 0, 0, 0.4)',
+    backgroundColor: 'rgba(220, 0, 0, 0.06)',
+  },
+  'promoted-by': {
+    outline: '2px solid rgba(128, 0, 255, 0.4)',
+    backgroundColor: 'rgba(128, 0, 255, 0.06)',
+  },
+  news: {
+    outline: '2px solid rgba(0, 153, 102, 0.4)',
+    backgroundColor: 'rgba(0, 153, 102, 0.06)',
+  },
+  puzzles: {
+    outline: '2px solid rgba(204, 122, 0, 0.4)',
+    backgroundColor: 'rgba(204, 122, 0, 0.06)',
+  },
+};
+
+const POST_FILTER_KEYS = new Set(['suggested', 'promoted', 'promoted-by']);
+
 function getFeed() {
   return document.querySelector('[data-component-type="LazyColumn"]');
+}
+
+function getPostLabelText(el) {
+  return el.textContent.replace(/\s+/g, ' ').trim();
+}
+
+function isSuggestedPost(postEl) {
+  return [...postEl.querySelectorAll('p')].some((p) => getPostLabelText(p) === 'Suggested');
+}
+
+function isPromotedPost(postEl) {
+  return [...postEl.querySelectorAll('p')].some((p) => getPostLabelText(p) === 'Promoted');
+}
+
+function isPromotedByPost(postEl) {
+  return [...postEl.querySelectorAll('p')].some((p) => getPostLabelText(p).startsWith('Promoted by'));
 }
 
 function scheduleApply() {
@@ -126,15 +168,12 @@ function attachFeedObserver() {
 // ---------------------------------------------------------------------------
 
 function findSidebarWidget(labelText, contentSelector) {
-  const label = [...document.querySelectorAll('p')].find(
-    (p) => p.textContent.trim() === labelText
-  );
+  const stopEl = document.body;
+  const label = [...document.querySelectorAll('p')].find((p) => p.textContent.trim() === labelText);
   if (!label) return null;
 
-  // Walk up until we find the ancestor that contains the widget's content links,
-  // then return its parent as the full card wrapper.
   let el = label;
-  while (el && el !== document.body) {
+  while (el && el !== stopEl) {
     if (el.querySelector(contentSelector)) {
       return el.parentElement || el;
     }
@@ -172,12 +211,12 @@ function applySidebarWidget(widget, key) {
   if (shouldHide) {
     if (widget.dataset.lfrHidden === key) {
       // Re-apply in case transparentMode changed
-      applyWidgetStyle(card, 'promoted');
+      applyWidgetStyle(card, key);
       return;
     }
     console.log(`[LFR] Hiding sidebar widget: ${key}`);
     widget.dataset.lfrHidden = key;
-    applyWidgetStyle(card, 'promoted');
+    applyWidgetStyle(card, key);
   } else {
     if (widget.dataset.lfrHidden !== key) return;
     console.log(`[LFR] Showing sidebar widget: ${key}`);
@@ -203,12 +242,13 @@ function findCardContainer(el) {
   return current;
 }
 
-function applyWidgetStyle(element) {
+function applyWidgetStyle(element, key) {
   if (currentSettings.transparentMode) {
+    const style = FILTER_STYLES[key] || FILTER_STYLES.promoted;
     element.style.display = 'block';
     element.style.opacity = '0.4';
-    element.style.outline = '2px solid rgba(220, 0, 0, 0.4)';
-    element.style.backgroundColor = 'rgba(220, 0, 0, 0.06)';
+    element.style.outline = style.outline;
+    element.style.backgroundColor = style.backgroundColor;
   } else {
     element.style.display = 'none';
     element.style.opacity = '';
@@ -234,38 +274,34 @@ function applyFeedFilters() {
   const posts = [...feed.children];
 
   posts.forEach((post) => {
-    if (isSuggestedPost(post)) {
-      currentSettings.hideSuggested ? hideSuggestedPost(post) : showSuggestedPost(post);
+    const filterKey = getPostFilterKey(post);
+    if (!filterKey) {
+      if (POST_FILTER_KEYS.has(post.dataset.lfrHidden)) clearPostStyle(post);
+      return;
     }
-    if (isPromotedPost(post)) {
-      currentSettings.hidePromoted ? hidePromotedPost(post) : showPromotedPost(post);
+
+    const shouldHide =
+      (filterKey === 'suggested' && currentSettings.hideSuggested) ||
+      (filterKey === 'promoted' && currentSettings.hidePromoted) ||
+      (filterKey === 'promoted-by' && currentSettings.hidePromotedBy);
+
+    if (shouldHide) {
+      applyHiddenPost(post, filterKey);
+      return;
     }
+
+    if (post.dataset.lfrHidden === filterKey) clearPostStyle(post);
   });
-}
-
-function isSuggestedPost(postEl) {
-  return [...postEl.querySelectorAll('p')].some(
-    (p) => p.textContent.trim() === 'Suggested'
-  );
-}
-
-function isPromotedPost(postEl) {
-  return [...postEl.querySelectorAll('p')].some(
-    (p) => p.textContent.trim() === 'Promoted'
-  );
 }
 
 function applyPostStyle(post, type) {
   post.dataset.lfrHidden = type;
   if (currentSettings.transparentMode) {
+    const style = FILTER_STYLES[type] || FILTER_STYLES.promoted;
     post.style.display = 'block';
     post.style.opacity = '0.4';
-    post.style.outline = type === 'suggested'
-      ? '2px solid rgba(0, 100, 255, 0.4)'
-      : '2px solid rgba(220, 0, 0, 0.4)';
-    post.style.backgroundColor = type === 'suggested'
-      ? 'rgba(0, 100, 255, 0.06)'
-      : 'rgba(220, 0, 0, 0.06)';
+    post.style.outline = style.outline;
+    post.style.backgroundColor = style.backgroundColor;
   } else {
     post.style.display = 'none';
     post.style.opacity = '';
@@ -282,36 +318,21 @@ function clearPostStyle(post) {
   post.style.backgroundColor = '';
 }
 
-function hideSuggestedPost(post) {
-  if (post.dataset.lfrHidden === 'suggested') {
+function getPostFilterKey(post) {
+  if (isSuggestedPost(post)) return 'suggested';
+  if (isPromotedByPost(post)) return 'promoted-by';
+  if (isPromotedPost(post)) return 'promoted';
+  return null;
+}
+
+function applyHiddenPost(post, type) {
+  if (post.dataset.lfrHidden === type) {
     // Re-apply in case transparentMode changed
-    applyPostStyle(post, 'suggested');
+    applyPostStyle(post, type);
     return;
   }
-  console.log('[LFR] Filtering suggested post:', post);
-  applyPostStyle(post, 'suggested');
-}
-
-function showSuggestedPost(post) {
-  if (post.dataset.lfrHidden !== 'suggested') return;
-  console.log('[LFR] Showing suggested post:', post);
-  clearPostStyle(post);
-}
-
-function hidePromotedPost(post) {
-  if (post.dataset.lfrHidden === 'promoted') {
-    // Re-apply in case transparentMode changed
-    applyPostStyle(post, 'promoted');
-    return;
-  }
-  console.log('[LFR] Filtering promoted post:', post);
-  applyPostStyle(post, 'promoted');
-}
-
-function showPromotedPost(post) {
-  if (post.dataset.lfrHidden !== 'promoted') return;
-  console.log('[LFR] Showing promoted post:', post);
-  clearPostStyle(post);
+  console.log(`[LFR] Filtering ${type} post:`, post);
+  applyPostStyle(post, type);
 }
 
 // ---------------------------------------------------------------------------

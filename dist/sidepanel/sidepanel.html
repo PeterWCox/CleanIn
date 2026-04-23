@@ -33,6 +33,17 @@
           <span class="slider"></span>
         </div>
       </label>
+
+      <label class="toggle-row" for="toggle-promoted-by">
+        <span class="toggle-label">
+          <span class="toggle-title">Hide Promoted by</span>
+          <span class="toggle-description">Removes feed posts labeled "Promoted by" a company or page</span>
+        </span>
+        <div class="toggle-switch">
+          <input type="checkbox" id="toggle-promoted-by" />
+          <span class="slider"></span>
+        </div>
+      </label>
     </section>
 
     <section class="filter-section">
@@ -64,8 +75,8 @@
       <h2>Display Mode</h2>
 
       <div class="chip-row" role="radiogroup" aria-label="Filtered post display mode">
-        <button type="button" class="chip" role="radio" data-mode="transparent" aria-checked="true">Transparent</button>
-        <button type="button" class="chip" role="radio" data-mode="hidden" aria-checked="false">Hidden</button>
+        <button type="button" class="chip" role="radio" data-mode="transparent" aria-checked="false">Transparent</button>
+        <button type="button" class="chip" role="radio" data-mode="hidden" aria-checked="true">Hidden</button>
       </div>
       <p class="chip-description">Transparent shows filtered posts dimmed for debugging. Hidden removes them entirely.</p>
     </section>

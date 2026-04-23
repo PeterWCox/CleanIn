@@ -7,7 +7,7 @@ chrome.action.onClicked.addListener((tab) => {
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 
 // Listen for messages from content script or side panel
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "GET_SETTINGS") {
     chrome.storage.sync.get(defaultSettings, (settings) => {
       sendResponse({ settings });
@@ -29,6 +29,7 @@ function notifyLinkedInTabs(settings) {
   chrome.tabs.query(
     {
       url: [
+        "https://www.linkedin.com/",
         "https://www.linkedin.com/feed",
         "https://www.linkedin.com/feed/",
         "https://www.linkedin.com/feed/*",
@@ -47,7 +48,8 @@ function notifyLinkedInTabs(settings) {
 const defaultSettings = {
   hideSuggested: true,
   hidePromoted: true,
+  hidePromotedBy: true,
   hideLinkedInNews: true,
   hidePuzzles: true,
-  transparentMode: true,
+  transparentMode: false,
 };

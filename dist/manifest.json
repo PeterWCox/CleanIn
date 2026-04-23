@@ -9,6 +9,7 @@
     "storage"
   ],
   "host_permissions": [
+    "https://www.linkedin.com/",
     "https://www.linkedin.com/feed",
     "https://www.linkedin.com/feed/",
     "https://www.linkedin.com/feed/*"
@@ -19,6 +20,7 @@
   "content_scripts": [
     {
       "matches": [
+        "https://www.linkedin.com/",
         "https://www.linkedin.com/feed",
         "https://www.linkedin.com/feed/",
         "https://www.linkedin.com/feed/*"
