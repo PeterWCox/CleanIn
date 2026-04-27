@@ -49,6 +49,7 @@ const defaultSettings = {
   hideSuggested: true,
   hidePromoted: true,
   hidePromotedBy: true,
+  hideMedia: true,
   hideLinkedInNews: true,
   hidePuzzles: true,
   transparentMode: false,
