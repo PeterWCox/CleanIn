@@ -4,7 +4,6 @@ const defaultSettings = {
   hideSuggested: true,
   hidePromoted: true,
   hidePromotedBy: true,
-  hideMedia: true,
   hideLinkedInNews: true,
   hidePuzzles: true,
   transparentMode: false,
@@ -27,10 +26,6 @@ const FILTER_STYLES = {
   'promoted-by': {
     outline: '2px solid rgba(128, 0, 255, 0.4)',
     backgroundColor: 'rgba(128, 0, 255, 0.06)',
-  },
-  media: {
-    outline: '2px solid rgba(0, 119, 255, 0.4)',
-    backgroundColor: 'rgba(0, 119, 255, 0.06)',
   },
   news: {
     outline: '2px solid rgba(0, 153, 102, 0.4)',
@@ -295,10 +290,8 @@ function applyFeedFilters() {
       return;
     }
 
-    if (POST_FILTER_KEYS.has(post.dataset.lfrHidden)) clearPostStyle(post);
+    if (post.dataset.lfrHidden === filterKey) clearPostStyle(post);
   });
-
-  applyMediaFilters(feed, posts);
 }
 
 function applyPostStyle(post, type) {
@@ -340,84 +333,6 @@ function applyHiddenPost(post, type) {
   }
   console.log(`[LFR] Filtering ${type} post:`, post);
   applyPostStyle(post, type);
-}
-
-function applyMediaFilters(feed, posts) {
-  const mediaContainers = new Set();
-
-  posts.forEach((post) => {
-    getPostMediaElements(post).forEach((media) => {
-      const container = media.closest('div');
-      if (container && post.contains(container)) {
-        mediaContainers.add(container);
-      }
-    });
-  });
-
-  feed.querySelectorAll('[data-lfr-media-hidden]').forEach((container) => {
-    if (!currentSettings.hideMedia || !mediaContainers.has(container)) {
-      clearMediaStyle(container);
-    }
-  });
-
-  if (!currentSettings.hideMedia) return;
-
-  mediaContainers.forEach((container) => {
-    applyMediaStyle(container);
-  });
-}
-
-function getPostMediaElements(post) {
-  return [...post.querySelectorAll('img, video')].filter(isPostMediaElement);
-}
-
-function isPostMediaElement(media) {
-  if (media.tagName.toLowerCase() === 'video') return true;
-
-  const alt = (media.getAttribute('alt') || '').trim().toLowerCase();
-  const source = getMediaSourceText(media);
-
-  if (alt === 'view image') return true;
-  if (source.includes('/feedshare-')) return true;
-  if (isProfileImage(alt, source)) return false;
-
-  const rect = media.getBoundingClientRect();
-  return rect.width >= 120 && rect.height >= 80;
-}
-
-function getMediaSourceText(media) {
-  return [media.currentSrc, media.src, media.srcset].filter(Boolean).join(' ');
-}
-
-function isProfileImage(alt, source) {
-  if (source.includes('/profile-displayphoto-')) return true;
-  if (source.includes('/company-logo_')) return true;
-  if (alt.includes('profile')) return true;
-  return false;
-}
-
-function applyMediaStyle(container) {
-  container.dataset.lfrMediaHidden = 'true';
-  if (currentSettings.transparentMode) {
-    const style = FILTER_STYLES.media;
-    container.style.display = '';
-    container.style.opacity = '0.4';
-    container.style.outline = style.outline;
-    container.style.backgroundColor = style.backgroundColor;
-  } else {
-    container.style.display = 'none';
-    container.style.opacity = '';
-    container.style.outline = '';
-    container.style.backgroundColor = '';
-  }
-}
-
-function clearMediaStyle(container) {
-  delete container.dataset.lfrMediaHidden;
-  container.style.display = '';
-  container.style.opacity = '';
-  container.style.outline = '';
-  container.style.backgroundColor = '';
 }
 
 // ---------------------------------------------------------------------------

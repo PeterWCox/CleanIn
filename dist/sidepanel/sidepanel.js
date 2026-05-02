@@ -1,7 +1,6 @@
 const toggleSuggested = document.getElementById('toggle-suggested');
 const togglePromoted = document.getElementById('toggle-promoted');
 const togglePromotedBy = document.getElementById('toggle-promoted-by');
-const toggleMedia = document.getElementById('toggle-media');
 const toggleLinkedInNews = document.getElementById('toggle-linkedin-news');
 const togglePuzzles = document.getElementById('toggle-puzzles');
 const chips = [...document.querySelectorAll('.chip[data-mode]')];
@@ -10,7 +9,6 @@ const defaultSettings = {
   hideSuggested: true,
   hidePromoted: true,
   hidePromotedBy: true,
-  hideMedia: true,
   hideLinkedInNews: true,
   hidePuzzles: true,
   transparentMode: false,
@@ -36,7 +34,6 @@ chrome.storage.sync.get(defaultSettings, (settings) => {
   toggleSuggested.checked = settings.hideSuggested;
   togglePromoted.checked = settings.hidePromoted;
   togglePromotedBy.checked = settings.hidePromotedBy;
-  toggleMedia.checked = settings.hideMedia;
   toggleLinkedInNews.checked = settings.hideLinkedInNews;
   togglePuzzles.checked = settings.hidePuzzles;
   transparentMode = settings.transparentMode;
@@ -52,7 +49,6 @@ function onToggleChange() {
     hideSuggested: toggleSuggested.checked,
     hidePromoted: togglePromoted.checked,
     hidePromotedBy: togglePromotedBy.checked,
-    hideMedia: toggleMedia.checked,
     hideLinkedInNews: toggleLinkedInNews.checked,
     hidePuzzles: togglePuzzles.checked,
     transparentMode,
@@ -64,7 +60,6 @@ function onToggleChange() {
 toggleSuggested.addEventListener('change', onToggleChange);
 togglePromoted.addEventListener('change', onToggleChange);
 togglePromotedBy.addEventListener('change', onToggleChange);
-toggleMedia.addEventListener('change', onToggleChange);
 toggleLinkedInNews.addEventListener('change', onToggleChange);
 togglePuzzles.addEventListener('change', onToggleChange);
 

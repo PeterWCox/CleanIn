@@ -74,7 +74,8 @@ def build_master(size: int = 512) -> Image.Image:
 
     canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     # Smaller margin => larger white disk behind the mark.
-    margin = max(1, int(round(size * 0.04)))
+    base = int(round(size * 0.04))
+    margin = max(1, base - 2)  # a few px larger disk than proportional margin alone
     m = margin
     draw = ImageDraw.Draw(canvas)
     draw.ellipse((m, m, size - 1 - m, size - 1 - m), fill=(255, 255, 255, 255))
