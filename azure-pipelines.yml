@@ -27,8 +27,15 @@ steps:
     displayName: Create Chrome Web Store ZIP
 
   - task: PublishPipelineArtifact@1
-    displayName: Publish Chrome Web Store package
+    displayName: Publish unpacked dist extension
     inputs:
-      targetPath: release
-      artifact: chrome-store-package
+      targetPath: dist
+      artifact: cleanin-dist
+      publishLocation: pipeline
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish Chrome Web Store ZIP
+    inputs:
+      targetPath: release/cleanin-chrome-store-v1.3.1.zip
+      artifact: chrome-store-zip
       publishLocation: pipeline
