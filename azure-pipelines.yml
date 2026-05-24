@@ -57,6 +57,8 @@ stages:
       - deployment: QA
         displayName: QA deployment
         environment: QA
+        pool:
+          vmImage: ubuntu-latest
         strategy:
           runOnce:
             deploy:
