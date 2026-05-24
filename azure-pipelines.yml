@@ -31,11 +31,16 @@ stages:
           - script: npm run package:prod
             displayName: Create Chrome Web Store ZIP
 
+          - script: |
+              cd dist
+              zip -r ../release/dist.zip .
+            displayName: Create QA dist ZIP
+
           - task: PublishPipelineArtifact@1
-            displayName: Publish unpacked dist extension
+            displayName: Publish QA dist ZIP
             inputs:
-              targetPath: dist
-              artifact: cleanin-dist
+              targetPath: release/dist.zip
+              artifact: dist.zip
               publishLocation: pipeline
 
           - task: PublishPipelineArtifact@1
@@ -45,30 +50,26 @@ stages:
               artifact: chrome-store-zip
               publishLocation: pipeline
 
-  - stage: TestDistLocally
-    displayName: Manual test unpacked dist locally
+  - stage: QA
+    displayName: QA
     dependsOn: BuildAndPublish
     jobs:
-      - job: ConfirmLocalDistTest
-        displayName: Confirm local dist test
-        pool: server
-        timeoutInMinutes: 4320
-        steps:
-          - task: ManualValidation@0
-            displayName: Confirm dist works locally
-            timeoutInMinutes: 4320
-            inputs:
-              notifyUsers: ''
-              instructions: |
-                Download the cleanin-dist artifact from this run.
-                In Chrome, open chrome://extensions, enable Developer mode, click Load unpacked, and select the downloaded dist folder.
-                Test LinkedIn with the CleanIn extension enabled.
-                Resume this stage after the unpacked dist has been tested successfully.
-              onTimeout: reject
+      - deployment: QA
+        displayName: QA deployment
+        environment: QA
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: |
+                    echo "Download the dist.zip artifact from this run."
+                    echo "Unzip it, then in Chrome open chrome://extensions, enable Developer mode, click Load unpacked, and select the unzipped dist folder."
+                    echo "Test LinkedIn with the CleanIn extension enabled before approving the next stage."
+                  displayName: QA test instructions
 
   - stage: ConfirmChromeStoreUpload
     displayName: Manual confirm Chrome Store upload
-    dependsOn: TestDistLocally
+    dependsOn: QA
     jobs:
       - job: ConfirmStoreUpload
         displayName: Confirm Chrome Developer Store upload
