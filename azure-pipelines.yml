@@ -56,20 +56,21 @@ stages:
     displayName: QA
     dependsOn: BuildAndPublish
     jobs:
-      - deployment: QA
-        displayName: QA deployment
-        environment: QA
-        pool:
-          vmImage: ubuntu-latest
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - script: |
-                    echo "Download the dist.zip artifact from this run."
-                    echo "Unzip it, then in Chrome open chrome://extensions, enable Developer mode, click Load unpacked, and select the unzipped dist folder."
-                    echo "Test LinkedIn with the CleanIn extension enabled before approving the next stage."
-                  displayName: QA test instructions
+      - job: ManualQATest
+        displayName: Manual QA test dist.zip
+        pool: server
+        timeoutInMinutes: 4320
+        steps:
+          - task: ManualValidation@0
+            displayName: Confirm local dist.zip QA test
+            timeoutInMinutes: 4320
+            inputs:
+              notifyUsers: ''
+              instructions: |
+                Download the dist.zip artifact from this run.
+                Unzip it, then in Chrome open chrome://extensions, enable Developer mode, click Load unpacked, and select the unzipped dist folder.
+                Test LinkedIn with the CleanIn extension enabled, including transparent and hidden modes, before resuming this stage.
+              onTimeout: reject
 
   - stage: ConfirmChromeStoreUpload
     displayName: Manual confirm Chrome Store upload
