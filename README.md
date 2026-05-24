@@ -29,7 +29,7 @@ The source code is available if you'd prefer to build it yourself: [https://gith
 7. Click Load unpacked and select the generated `dist/` folder.
 8. Visit [linkedin.com](https://www.linkedin.com/) or [linkedin.com/feed](https://www.linkedin.com/feed/) and open the extension side panel to adjust filters.
 
-Chrome Web Store releases and local unpacked installs both use [dist/](dist/) directly, with the normal `CleanIn` name and production icon. The folder is generated from [extension-src/](extension-src/) by [vite.config.ts](vite.config.ts): use `npm run build` or `npm run build:prod` for the extension, and `npm run package:prod` to create the upload ZIP.
+Chrome Web Store releases and local unpacked installs both use [dist/](dist/) directly, with the normal `CleanIn` name and production icon. The folder is copied directly from [extension-src/](extension-src/) by [scripts/build_dist.mjs](scripts/build_dist.mjs): use `npm run build` or `npm run build:prod` for the extension, and `npm run package:prod` to create the upload ZIP.
 
 ## Caveats
 - Only matches the English LinkedIn UI. If your LinkedIn is in French, *toutes mes excuses*.
