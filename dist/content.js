@@ -314,18 +314,17 @@ function applySidebarWidget(widget, key) {
   const card = findSidebarCardContainer(widget);
 
   if (shouldHide) {
-    if (widget.dataset.lfrHidden === key) {
+    if (card.dataset.lfrHidden === key) {
       // Re-apply in case transparentMode changed
       applyWidgetStyle(card, key);
       return;
     }
     console.log(`[LFR] Hiding sidebar widget: ${key}`);
-    widget.dataset.lfrHidden = key;
+    card.dataset.lfrHidden = key;
     applyWidgetStyle(card, key);
   } else {
-    if (widget.dataset.lfrHidden !== key) return;
+    if (card.dataset.lfrHidden !== key) return;
     console.log(`[LFR] Showing sidebar widget: ${key}`);
-    delete widget.dataset.lfrHidden;
     clearWidgetStyle(card);
   }
 }
