@@ -44,6 +44,9 @@ const FILTER_STYLES = {
 };
 
 const POST_FILTER_KEYS = new Set(['suggested', 'promoted', 'promoted-by', 'phrase']);
+const SIDEBAR_ROOT_SELECTOR = 'aside, [role="complementary"], .scaffold-layout__aside';
+const SIDEBAR_WIDGET_MAX_WIDTH = 420;
+const SIDEBAR_WIDGET_MAX_HEIGHT = 900;
 const PHRASE_HIGHLIGHT_ATTR = 'data-lfr-phrase-highlight';
 const PHRASE_HIGHLIGHT_STYLE = {
   backgroundColor: 'rgba(255, 214, 10, 0.45)',
@@ -212,18 +215,58 @@ function attachFeedObserver() {
 // ---------------------------------------------------------------------------
 
 function findSidebarWidget(labelText, contentSelector) {
-  const stopEl = document.body;
-  const label = [...document.querySelectorAll('p')].find((p) => p.textContent.trim() === labelText);
-  if (!label) return null;
+  const sidebarRoots = [...document.querySelectorAll(SIDEBAR_ROOT_SELECTOR)].filter(isEligibleSidebarRoot);
 
-  let el = label;
-  while (el && el !== stopEl) {
-    if (el.querySelector(contentSelector)) {
-      return el.parentElement || el;
+  for (const root of sidebarRoots) {
+    const label = [...root.querySelectorAll('p')].find((p) => p.textContent.trim() === labelText);
+    if (!label) continue;
+
+    let el = label;
+    while (el && el !== root) {
+      if (el.querySelector(contentSelector)) {
+        return el;
+      }
+      el = el.parentElement;
     }
-    el = el.parentElement;
   }
+
   return null;
+}
+
+function isNarrowSidebarRoot(root) {
+  const rect = root.getBoundingClientRect();
+  return rect.width > 0 && rect.width <= SIDEBAR_WIDGET_MAX_WIDTH;
+}
+
+function isEligibleSidebarRoot(root) {
+  return isNarrowSidebarRoot(root) && !root.closest('main, [role="main"]');
+}
+
+function isReasonableSidebarWidget(el) {
+  const rect = el.getBoundingClientRect();
+  return (
+    rect.width > 0 &&
+    rect.width <= SIDEBAR_WIDGET_MAX_WIDTH &&
+    rect.height > 0 &&
+    rect.height <= SIDEBAR_WIDGET_MAX_HEIGHT
+  );
+}
+
+function findSidebarCardContainer(el) {
+  const root = el.closest(SIDEBAR_ROOT_SELECTOR);
+  let current = el;
+
+  while (current && current !== root && current !== document.body) {
+    const parent = current.parentElement;
+    if (!parent || parent === root) return current;
+    if (parent.children.length === 1 && isReasonableSidebarWidget(parent)) {
+      current = parent;
+      continue;
+    }
+    break;
+  }
+
+  return current;
 }
 
 function waitForSidebarWidget(labelText, contentSelector, key) {
@@ -250,7 +293,7 @@ function applySidebarWidget(widget, key) {
     (key === 'puzzles' && currentSettings.hidePuzzles);
 
   // The widget element may be nested; find the top-level card container.
-  const card = findCardContainer(widget);
+  const card = findSidebarCardContainer(widget);
 
   if (shouldHide) {
     if (widget.dataset.lfrHidden === key) {
@@ -294,7 +337,10 @@ function applySidebarPhraseFilters() {
 }
 
 function getSidebarCards() {
-  const sidebarLinks = [...document.querySelectorAll('aside a[href], [role="complementary"] a[href]')];
+  const sidebarLinks = [...document.querySelectorAll(`${SIDEBAR_ROOT_SELECTOR} a[href]`)].filter((link) => {
+    const root = link.closest(SIDEBAR_ROOT_SELECTOR);
+    return root && isEligibleSidebarRoot(root);
+  });
   return [...new Set(sidebarLinks.map(findCardContainer).filter(Boolean))];
 }
 
