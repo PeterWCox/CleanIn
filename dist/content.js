@@ -218,16 +218,27 @@ function findSidebarWidget(labelText, contentSelector) {
   const sidebarRoots = [...document.querySelectorAll(SIDEBAR_ROOT_SELECTOR)].filter(isEligibleSidebarRoot);
 
   for (const root of sidebarRoots) {
-    const label = [...root.querySelectorAll('p')].find((p) => p.textContent.trim() === labelText);
-    if (!label) continue;
-
-    let el = label;
-    while (el && el !== root) {
-      if (el.querySelector(contentSelector)) {
-        return el;
-      }
-      el = el.parentElement;
+    const contentElements = [...root.querySelectorAll(contentSelector)];
+    for (const contentEl of contentElements) {
+      const widget = findSidebarWidgetFromContent(root, contentEl, labelText);
+      if (widget) return widget;
     }
+  }
+
+  return null;
+}
+
+function findSidebarWidgetFromContent(root, contentEl, labelText) {
+  let current = contentEl;
+  while (current && current !== root && current !== document.body) {
+    if (isReasonableSidebarWidget(current) && getElementText(current).includes(labelText)) {
+      return current;
+    }
+    current = current.parentElement;
+  }
+
+  if (isReasonableSidebarWidget(root) && getElementText(root).includes(labelText)) {
+    return root;
   }
 
   return null;
@@ -239,7 +250,14 @@ function isNarrowSidebarRoot(root) {
 }
 
 function isEligibleSidebarRoot(root) {
-  return isNarrowSidebarRoot(root) && !root.closest('main, [role="main"]');
+  return isNarrowSidebarRoot(root) && !isFeedContentRoot(root);
+}
+
+function isFeedContentRoot(root) {
+  return Boolean(
+    root.closest('[data-component-type="LazyColumn"], [role="feed"]') ||
+      root.querySelector('[data-activity-urn], .feed-shared-update-v2, .occludable-update')
+  );
 }
 
 function isReasonableSidebarWidget(el) {
