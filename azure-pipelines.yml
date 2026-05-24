@@ -5,30 +5,83 @@ trigger:
 
 pr: none
 
-pool:
-  vmImage: ubuntu-latest
+stages:
+  - stage: BuildAndPublish
+    displayName: Build and publish artifacts
+    jobs:
+      - job: Build
+        displayName: Build extension package
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: NodeTool@0
+            displayName: Use Node.js 20
+            inputs:
+              versionSpec: 20.x
 
-steps:
-  - task: NodeTool@0
-    displayName: Use Node.js 20
-    inputs:
-      versionSpec: 20.x
+          - script: npm ci
+            displayName: Install dependencies
 
-  - script: npm ci
-    displayName: Install dependencies
+          - script: npm run build:prod
+            displayName: Build production extension
 
-  - script: npm run build:prod
-    displayName: Build production extension
+          - script: npm run validate
+            displayName: Validate generated extension files
 
-  - script: npm run validate
-    displayName: Validate generated extension files
+          - script: npm run package:prod
+            displayName: Create Chrome Web Store ZIP
 
-  - script: npm run package:prod
-    displayName: Create Chrome Web Store ZIP
+          - task: PublishPipelineArtifact@1
+            displayName: Publish unpacked dist extension
+            inputs:
+              targetPath: dist
+              artifact: cleanin-dist
+              publishLocation: pipeline
 
-  - task: PublishPipelineArtifact@1
-    displayName: Publish Chrome Web Store package
-    inputs:
-      targetPath: release
-      artifact: chrome-store-package
-      publishLocation: pipeline
+          - task: PublishPipelineArtifact@1
+            displayName: Publish Chrome Web Store ZIP
+            inputs:
+              targetPath: release/cleanin-chrome-store-v1.3.1.zip
+              artifact: chrome-store-zip
+              publishLocation: pipeline
+
+  - stage: TestDistLocally
+    displayName: Manual test unpacked dist locally
+    dependsOn: BuildAndPublish
+    jobs:
+      - job: ConfirmLocalDistTest
+        displayName: Confirm local dist test
+        pool: server
+        timeoutInMinutes: 4320
+        steps:
+          - task: ManualValidation@0
+            displayName: Confirm dist works locally
+            timeoutInMinutes: 4320
+            inputs:
+              notifyUsers: ''
+              instructions: |
+                Download the cleanin-dist artifact from this run.
+                In Chrome, open chrome://extensions, enable Developer mode, click Load unpacked, and select the downloaded dist folder.
+                Test LinkedIn with the CleanIn extension enabled.
+                Resume this stage after the unpacked dist has been tested successfully.
+              onTimeout: reject
+
+  - stage: ConfirmChromeStoreUpload
+    displayName: Manual confirm Chrome Store upload
+    dependsOn: TestDistLocally
+    jobs:
+      - job: ConfirmStoreUpload
+        displayName: Confirm Chrome Developer Store upload
+        pool: server
+        timeoutInMinutes: 4320
+        steps:
+          - task: ManualValidation@0
+            displayName: Confirm Chrome Store ZIP uploaded
+            timeoutInMinutes: 4320
+            inputs:
+              notifyUsers: ''
+              instructions: |
+                Download the chrome-store-zip artifact from this run.
+                Upload cleanin-chrome-store-v1.3.1.zip to the Chrome Developer Store.
+                Resume this stage after the package has been uploaded successfully.
+              onTimeout: reject
