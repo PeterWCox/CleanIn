@@ -4,11 +4,11 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build:dev": "CLEANIN_EXTENSION_TARGET=dev vite build --mode development",
-    "build:prod": "CLEANIN_EXTENSION_TARGET=prod vite build --mode production",
-    "build:all": "npm run build:dev && npm run build:prod",
+    "build": "vite build --mode production",
+    "build:prod": "npm run build",
+    "build:all": "npm run build",
     "package:prod": "npm run build:prod && node scripts/package_release.mjs",
-    "validate": "python3 -m json.tool dist/manifest.json >/dev/null && node --check dist/content.js && node --check dist/background.js && node --check dist/sidepanel/sidepanel.js && python3 -m py_compile scripts/render_extension_icons.py && git diff --check"
+    "validate": "python3 -m json.tool dist/manifest.json >/dev/null && node --check dist/content.js && node --check dist/background.js && node --check dist/sidepanel/sidepanel.js && git diff --check"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",
