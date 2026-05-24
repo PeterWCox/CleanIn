@@ -15,6 +15,7 @@ let feedObserver = null;
 let feedInterval = null;
 let applyDebounceTimer = null;
 let phraseHighlightSignature = null;
+let animateFilteredHides = false;
 
 const FILTER_STYLES = {
   suggested: {
@@ -44,6 +45,7 @@ const FILTER_STYLES = {
 };
 
 const POST_FILTER_KEYS = new Set(['suggested', 'promoted', 'promoted-by', 'phrase']);
+const SIDEBAR_FILTER_KEYS = new Set(['suggested', 'promoted', 'promoted-by']);
 const SIDEBAR_ROOT_SELECTOR = 'aside, [role="complementary"], .scaffold-layout__aside';
 const SIDEBAR_WIDGET_MAX_WIDTH = 420;
 const SIDEBAR_WIDGET_MAX_HEIGHT = 900;
@@ -101,11 +103,37 @@ function scheduleApply() {
 }
 
 function applySidebarWidgets() {
+  syncExistingHiddenSidebarWidgets();
+
   const newsWidget = findSidebarWidget('LinkedIn News', 'a[href*="/news/story/"]');
   if (newsWidget) applySidebarWidget(newsWidget, 'news');
   const puzzlesWidget = findSidebarWidget("Today\u2019s puzzles", 'a[href*="/games/"]');
   if (puzzlesWidget) applySidebarWidget(puzzlesWidget, 'puzzles');
+  applySidebarCardFilters();
   applySidebarPhraseFilters();
+}
+
+function syncExistingHiddenSidebarWidgets() {
+  document
+    .querySelectorAll('[data-lfr-hidden="news"], [data-lfr-hidden="puzzles"], [data-lfr-hidden="phrase"], [data-lfr-hidden="suggested"], [data-lfr-hidden="promoted"], [data-lfr-hidden="promoted-by"]')
+    .forEach((card) => {
+      if (!card.closest(SIDEBAR_ROOT_SELECTOR)) return;
+
+      const key = card.dataset.lfrHidden;
+      const shouldKeepHidden =
+        (key === 'news' && currentSettings.hideLinkedInNews) ||
+        (key === 'puzzles' && currentSettings.hidePuzzles) ||
+        (key === 'phrase' && getMatchingSidebarPhrase(card, normalizePhraseList(currentSettings.hideSidebarPhrases))) ||
+        (key === 'suggested' && currentSettings.hideSuggested) ||
+        (key === 'promoted' && currentSettings.hidePromoted) ||
+        (key === 'promoted-by' && currentSettings.hidePromotedBy);
+
+      if (shouldKeepHidden) {
+        applyWidgetStyle(card, key);
+      } else {
+        clearWidgetStyle(card);
+      }
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -349,8 +377,60 @@ function applySidebarPhraseFilters() {
   });
 
   [...document.querySelectorAll('[data-lfr-hidden="phrase"][data-lfr-phrase-scope="sidebar"]')].forEach((card) => {
-    if (!activeCards.has(card)) clearWidgetStyle(card);
+    if (activeCards.has(card)) return;
+
+    const matchedPhrase = getMatchingSidebarPhrase(card, phrases);
+    if (matchedPhrase) {
+      card.dataset.lfrPhrase = matchedPhrase;
+      applySidebarPhraseWidget(card);
+    } else {
+      clearWidgetStyle(card);
+    }
   });
+}
+
+function applySidebarCardFilters() {
+  const sidebarCards = getSidebarCards();
+  const activeCards = new Set();
+
+  sidebarCards.forEach((card) => {
+    const filterKey = getSidebarCardFilterKey(card);
+    if (!filterKey) {
+      if (SIDEBAR_FILTER_KEYS.has(card.dataset.lfrHidden)) clearWidgetStyle(card);
+      return;
+    }
+
+    const shouldHide =
+      (filterKey === 'suggested' && currentSettings.hideSuggested) ||
+      (filterKey === 'promoted' && currentSettings.hidePromoted) ||
+      (filterKey === 'promoted-by' && currentSettings.hidePromotedBy);
+
+    if (shouldHide) {
+      activeCards.add(card);
+      applySidebarFilteredCard(card, filterKey);
+      return;
+    }
+
+    if (card.dataset.lfrHidden === filterKey) clearWidgetStyle(card);
+  });
+
+  [...document.querySelectorAll('[data-lfr-hidden="suggested"], [data-lfr-hidden="promoted"], [data-lfr-hidden="promoted-by"]')]
+    .filter((card) => card.closest(SIDEBAR_ROOT_SELECTOR))
+    .forEach((card) => {
+      if (activeCards.has(card)) return;
+
+      const filterKey = getSidebarCardFilterKey(card);
+      const shouldHide =
+        (filterKey === 'suggested' && currentSettings.hideSuggested) ||
+        (filterKey === 'promoted' && currentSettings.hidePromoted) ||
+        (filterKey === 'promoted-by' && currentSettings.hidePromotedBy);
+
+      if (filterKey && shouldHide) {
+        applySidebarFilteredCard(card, filterKey);
+      } else {
+        clearWidgetStyle(card);
+      }
+    });
 }
 
 function getSidebarCards() {
@@ -359,6 +439,29 @@ function getSidebarCards() {
     return root && isEligibleSidebarRoot(root);
   });
   return [...new Set(sidebarLinks.map(findCardContainer).filter(Boolean))];
+}
+
+function getSidebarCardFilterKey(card) {
+  if (hasSidebarCardLabel(card, (label) => label.startsWith('Promoted by'))) return 'promoted-by';
+  if (hasSidebarCardLabel(card, (label) => label === 'Promoted')) return 'promoted';
+  if (hasSidebarCardLabel(card, (label) => label === 'Suggested' || label.startsWith('Suggested for'))) return 'suggested';
+  return null;
+}
+
+function hasSidebarCardLabel(card, predicate) {
+  return [...card.querySelectorAll('p, span, div')].some((el) => {
+    const label = getElementText(el);
+    if (!label || label.length > 80) return false;
+    return predicate(label);
+  });
+}
+
+function applySidebarFilteredCard(card, key) {
+  if (card.dataset.lfrHidden !== key) {
+    console.log(`[LFR] Filtering sidebar ${key} card:`, card);
+  }
+  card.dataset.lfrHidden = key;
+  applyWidgetStyle(card, key);
 }
 
 function getMatchingSidebarPhrase(card, phrases) {
@@ -376,28 +479,27 @@ function applySidebarPhraseWidget(card) {
 }
 
 function findCardContainer(el) {
-  // Walk up to find the card wrapper (usually a div with padding, border, shadow).
+  // Walk up to the largest reasonable sidebar card wrapper, not just the clicked link.
+  const root = el.closest(SIDEBAR_ROOT_SELECTOR);
   let current = el;
-  while (current && current !== document.body) {
+  let best = el;
+
+  while (current && current !== root && current !== document.body) {
+    if (isReasonableSidebarWidget(current)) best = current;
+
     const parent = current.parentElement;
-    if (!parent) return current;
-    // If parent is a generic container (e.g., another div/section), keep walking.
-    // Stop when we find a reasonable card boundary (e.g., has siblings that are other cards).
-    if (parent.children.length === 1 && parent === current.parentElement) {
-      current = parent;
-    } else {
-      break;
-    }
+    if (!parent || parent === root || !isReasonableSidebarWidget(parent)) break;
+    current = parent;
   }
-  return current;
+
+  return best;
 }
 
 function applyWidgetStyle(element, key) {
   if (currentSettings.transparentMode) {
     applyTransparentFilterStyle(element, key);
   } else {
-    clearFilteredElementStyle(element);
-    element.style.display = 'none';
+    applyHiddenFilterStyle(element);
   }
 }
 
@@ -738,8 +840,7 @@ function applyPostStyle(post, type) {
   if (currentSettings.transparentMode) {
     applyTransparentFilterStyle(post, type);
   } else {
-    clearFilteredElementStyle(post);
-    post.style.display = 'none';
+    applyHiddenFilterStyle(post);
   }
 }
 
@@ -754,22 +855,48 @@ function clearPostStyle(post) {
 function applyTransparentFilterStyle(element, key) {
   const style = FILTER_STYLES[key] || FILTER_STYLES.promoted;
   element.style.display = 'block';
+  element.style.transition = '';
   element.style.opacity = '0.4';
   element.style.outline = style.outline;
   element.style.backgroundColor = style.backgroundColor;
   element.style.backgroundImage = '';
   element.style.boxShadow = '';
   element.style.filter = '';
+  element.style.pointerEvents = '';
+}
+
+function applyHiddenFilterStyle(element) {
+  if (!animateFilteredHides || element.style.display === 'none') {
+    clearFilteredElementStyle(element);
+    element.style.display = 'none';
+    return;
+  }
+
+  element.style.transition = 'opacity 220ms ease';
+  element.style.opacity = element.style.opacity || '1';
+  element.style.pointerEvents = 'none';
+
+  requestAnimationFrame(() => {
+    element.style.opacity = '0';
+  });
+
+  setTimeout(() => {
+    if (!currentSettings.transparentMode && element.dataset.lfrHidden) {
+      element.style.display = 'none';
+    }
+  }, 240);
 }
 
 function clearFilteredElementStyle(element) {
   element.style.display = '';
+  element.style.transition = '';
   element.style.opacity = '';
   element.style.outline = '';
   element.style.backgroundColor = '';
   element.style.backgroundImage = '';
   element.style.boxShadow = '';
   element.style.filter = '';
+  element.style.pointerEvents = '';
 }
 
 function getPostFilterKey(post) {
@@ -796,15 +923,10 @@ function applyHiddenPost(post, type) {
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === 'SETTINGS_UPDATED') {
     currentSettings = normalizeSettings(message.settings);
+    animateFilteredHides = true;
     applyFeedFilters();
-
-    const newsWidget = findSidebarWidget('LinkedIn News', 'a[href*="/news/story/"]');
-    if (newsWidget) applySidebarWidget(newsWidget, 'news');
-
-    const puzzlesWidget = findSidebarWidget("Today\u2019s puzzles", 'a[href*="/games/"]');
-    if (puzzlesWidget) applySidebarWidget(puzzlesWidget, 'puzzles');
-
-    applySidebarPhraseFilters();
+    applySidebarWidgets();
+    animateFilteredHides = false;
   }
 });
 

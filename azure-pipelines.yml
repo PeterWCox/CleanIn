@@ -19,34 +19,36 @@ stages:
             inputs:
               versionSpec: 20.x
 
-          - script: npm ci
-            displayName: Install dependencies
-
-          - script: npm run build:prod
-            displayName: Build production extension
-
-          - script: npm run validate
-            displayName: Validate generated extension files
-
-          - script: npm run package:prod
-            displayName: Create Chrome Web Store ZIP
+          - script: |
+              python3 -m json.tool dist/manifest.json >/dev/null
+              node --check dist/content.js
+              node --check dist/background.js
+              node --check dist/sidepanel/sidepanel.js
+              git diff --check
+            displayName: Validate extension files
 
           - script: |
               cd dist
-              zip -r ../release/dist.zip .
-            displayName: Create QA dist ZIP
+              zip -r "$(Build.ArtifactStagingDirectory)/dist.zip" . -x "*.DS_Store" "__MACOSX/*"
+            displayName: Create dist ZIP
+
+          - script: |
+              version="$(node -e "console.log(JSON.parse(require('fs').readFileSync('dist/manifest.json', 'utf8')).version)")"
+              echo "##vso[task.setvariable variable=ExtensionVersion]${version}"
+              cp "$(Build.ArtifactStagingDirectory)/dist.zip" "$(Build.ArtifactStagingDirectory)/cleanin-chrome-store-v${version}.zip"
+            displayName: Create Chrome Web Store ZIP
 
           - task: PublishPipelineArtifact@1
             displayName: Publish QA dist ZIP
             inputs:
-              targetPath: release/dist.zip
+              targetPath: $(Build.ArtifactStagingDirectory)/dist.zip
               artifact: dist.zip
               publishLocation: pipeline
 
           - task: PublishPipelineArtifact@1
             displayName: Publish Chrome Web Store ZIP
             inputs:
-              targetPath: release/cleanin-chrome-store-v1.3.1.zip
+              targetPath: $(Build.ArtifactStagingDirectory)/cleanin-chrome-store-v$(ExtensionVersion).zip
               artifact: chrome-store-zip
               publishLocation: pipeline
 
@@ -57,6 +59,8 @@ stages:
       - deployment: QA
         displayName: QA deployment
         environment: QA
+        pool:
+          vmImage: ubuntu-latest
         strategy:
           runOnce:
             deploy:

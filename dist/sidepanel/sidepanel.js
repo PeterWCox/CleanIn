@@ -5,6 +5,7 @@ const toggleLinkedInNews = document.getElementById('toggle-linkedin-news');
 const togglePuzzles = document.getElementById('toggle-puzzles');
 const sidebarPhrases = document.getElementById('sidebar-phrases');
 const chips = [...document.querySelectorAll('.chip[data-mode]')];
+const PHRASE_INPUT_DEBOUNCE_MS = 600;
 
 const defaultSettings = {
   hideSuggested: true,
@@ -17,6 +18,7 @@ const defaultSettings = {
 };
 
 let transparentMode = defaultSettings.transparentMode;
+let phraseInputTimer = null;
 
 function renderChips() {
   chips.forEach((chip) => {
@@ -48,6 +50,8 @@ chrome.storage.sync.get(defaultSettings, (settings) => {
 // ---------------------------------------------------------------------------
 
 function onToggleChange() {
+  clearTimeout(phraseInputTimer);
+
   const settings = {
     hideSuggested: toggleSuggested.checked,
     hidePromoted: togglePromoted.checked,
@@ -59,6 +63,11 @@ function onToggleChange() {
   };
 
   chrome.runtime.sendMessage({ type: 'UPDATE_SETTINGS', settings });
+}
+
+function onPhraseInput() {
+  clearTimeout(phraseInputTimer);
+  phraseInputTimer = setTimeout(onToggleChange, PHRASE_INPUT_DEBOUNCE_MS);
 }
 
 function getSidebarPhrases() {
@@ -75,7 +84,7 @@ togglePromoted.addEventListener('change', onToggleChange);
 togglePromotedBy.addEventListener('change', onToggleChange);
 toggleLinkedInNews.addEventListener('change', onToggleChange);
 togglePuzzles.addEventListener('change', onToggleChange);
-sidebarPhrases.addEventListener('input', onToggleChange);
+sidebarPhrases.addEventListener('input', onPhraseInput);
 
 chips.forEach((chip) => {
   chip.addEventListener('click', () => {

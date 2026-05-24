@@ -16,20 +16,18 @@ The source code is available if you'd prefer to build it yourself: [https://gith
 ## Docs & store releases
 
 - Chrome Web Store form copy and justifications: [docs/chrome-web-store-privacy-answers.md](docs/chrome-web-store-privacy-answers.md) (see also [docs/README.md](docs/README.md)).
-- Packaged extension ZIPs for upload: [release/](release/).
+- Release ZIPs are produced by the Azure pipeline artifacts.
 
 ## Developer instructions
 
 1. Clone this repo.
 2. Optional: [snippets/](snippets/) has small reference HTML files for the feed and sidebar shapes the content script looks for.
-3. Run `npm install`.
-4. Run `npm run build`.
-5. Open `chrome://extensions` in Chrome.
-6. Toggle Developer mode on (top right).
-7. Click Load unpacked and select the generated `dist/` folder.
-8. Visit [linkedin.com](https://www.linkedin.com/) or [linkedin.com/feed](https://www.linkedin.com/feed/) and open the extension side panel to adjust filters.
+3. Open `chrome://extensions` in Chrome.
+4. Toggle Developer mode on (top right).
+5. Click Load unpacked and select the `dist/` folder.
+6. Visit [linkedin.com](https://www.linkedin.com/) or [linkedin.com/feed](https://www.linkedin.com/feed/) and open the extension side panel to adjust filters.
 
-Chrome Web Store releases and local unpacked installs both use [dist/](dist/) directly, with the normal `CleanIn` name and production icon. The folder is copied directly from [extension-src/](extension-src/) by [scripts/build_dist.mjs](scripts/build_dist.mjs): use `npm run build` or `npm run build:prod` for the extension, and `npm run package:prod` to create the upload ZIP.
+Chrome Web Store releases and local unpacked installs both use [dist/](dist/) directly, with the normal `CleanIn` name and production icon. There is no local build step; Azure validates and zips the folder for QA and Chrome Web Store upload.
 
 ## Caveats
 - Only matches the English LinkedIn UI. If your LinkedIn is in French, *toutes mes excuses*.
