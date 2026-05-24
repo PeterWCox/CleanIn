@@ -4,15 +4,10 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "vite build --mode production",
+    "build": "node scripts/build_dist.mjs",
     "build:prod": "npm run build",
     "build:all": "npm run build",
     "package:prod": "npm run build:prod && node scripts/package_release.mjs",
     "validate": "python3 -m json.tool dist/manifest.json >/dev/null && node --check dist/content.js && node --check dist/background.js && node --check dist/sidepanel/sidepanel.js && git diff --check"
-  },
-  "devDependencies": {
-    "@types/node": "^20.12.12",
-    "typescript": "^5.4.5",
-    "vite": "^5.2.12"
   }
 }
