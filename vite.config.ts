@@ -8,44 +8,29 @@ import {
 } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { execFileSync } from "node:child_process";
 import { defineConfig, type Plugin } from "vite";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-type ExtensionTarget = "dev" | "prod";
-
 type TargetConfig = {
   displayName: string;
   shortName: string;
-  iconDiscColor: string;
   outputDirName: string;
 };
 
 const TARGET_CONFIG = {
-  dev: {
-    displayName: "CleanIn Dev - Hide LinkedIn promoted and suggested posts",
-    shortName: "CleanIn Dev",
-    iconDiscColor: "#ffd60a",
-    outputDirName: "dist-dev",
-  },
-  prod: {
-    displayName: "CleanIn - Hide LinkedIn promoted and suggested posts",
-    shortName: "CleanIn",
-    iconDiscColor: "#ffffff",
-    outputDirName: "dist",
-  },
-} as const satisfies Record<ExtensionTarget, TargetConfig>;
+  displayName: "CleanIn - Hide LinkedIn promoted and suggested posts",
+  shortName: "CleanIn",
+  outputDirName: "dist",
+} as const satisfies TargetConfig;
 
 export default defineConfig(({ mode }) => {
-  const extensionTarget = getExtensionTarget();
-  const targetConfig = TARGET_CONFIG[extensionTarget];
   const isProduction = mode === "production";
-  const outDir = resolve(__dirname, targetConfig.outputDirName);
+  const outDir = resolve(__dirname, TARGET_CONFIG.outputDirName);
 
   return {
-    plugins: [copyExtensionPackage(targetConfig, outDir)],
+    plugins: [copyExtensionPackage(TARGET_CONFIG, outDir)],
     build: {
       outDir,
       emptyOutDir: true,
@@ -66,32 +51,11 @@ function copyExtensionPackage(targetConfig: TargetConfig, outDir: string): Plugi
       mkdirSync(outDir, { recursive: true });
 
       const sourceDir = resolve(__dirname, "extension-src");
-      cpSync(sourceDir, outDir, {
-        recursive: true,
-        filter: (source) => !source.endsWith("/icons"),
-      });
-
-      const iconsDir = resolve(outDir, "icons");
-      mkdirSync(iconsDir, { recursive: true });
-      execFileSync(
-        "python3",
-        [
-          resolve(__dirname, "scripts/render_extension_icons.py"),
-          "--out-dir",
-          iconsDir,
-          "--disk-color",
-          targetConfig.iconDiscColor,
-        ],
-        { stdio: "inherit" },
-      );
+      cpSync(sourceDir, outDir, { recursive: true });
 
       writeTargetManifest(outDir, targetConfig);
     },
   };
-}
-
-function getExtensionTarget(): ExtensionTarget {
-  return process.env.CLEANIN_EXTENSION_TARGET === "prod" ? "prod" : "dev";
 }
 
 function writeTargetManifest(outDir: string, targetConfig: TargetConfig) {

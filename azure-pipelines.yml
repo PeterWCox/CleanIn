@@ -17,8 +17,8 @@ steps:
   - script: npm ci
     displayName: Install dependencies
 
-  - script: npm run build:all
-    displayName: Build dev and prod extensions
+  - script: npm run build:prod
+    displayName: Build production extension
 
   - script: npm run validate
     displayName: Validate generated extension files

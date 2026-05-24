@@ -23,13 +23,13 @@ The source code is available if you'd prefer to build it yourself: [https://gith
 1. Clone this repo.
 2. Optional: [snippets/](snippets/) has small reference HTML files for the feed and sidebar shapes the content script looks for.
 3. Run `npm install`.
-4. Run `npm run build:dev`.
+4. Run `npm run build`.
 5. Open `chrome://extensions` in Chrome.
 6. Toggle Developer mode on (top right).
-7. Click Load unpacked and select the generated `dist-dev/` folder.
+7. Click Load unpacked and select the generated `dist/` folder.
 8. Visit [linkedin.com](https://www.linkedin.com/) or [linkedin.com/feed](https://www.linkedin.com/feed/) and open the extension side panel to adjust filters.
 
-Chrome Web Store releases use [dist/](dist/) directly, which keeps the normal `CleanIn` name and white-circle icon. Local development builds use the generated `dist-dev/` folder with the `CleanIn Dev` name and yellow-circle icon so they are easy to distinguish in Chrome. Both folders are generated from [extension-src/](extension-src/) by [vite.config.ts](vite.config.ts): use `npm run build:prod` for the store-safe extension, `npm run build:dev` for local development, and `npm run package:prod` to create the upload ZIP.
+Chrome Web Store releases and local unpacked installs both use [dist/](dist/) directly, with the normal `CleanIn` name and production icon. The folder is generated from [extension-src/](extension-src/) by [vite.config.ts](vite.config.ts): use `npm run build` or `npm run build:prod` for the extension, and `npm run package:prod` to create the upload ZIP.
 
 ## Caveats
 - Only matches the English LinkedIn UI. If your LinkedIn is in French, *toutes mes excuses*.
