@@ -8,87 +8,167 @@
 </head>
 <body>
   <main>
-    <div class="settings-card">
-    <section class="filter-section">
-      <h2>Display Mode</h2>
-      <p class="chip-description">Toggle to transparent to see how these settings affect your feed. Hidden removes filtered posts entirely.</p>
-
-      <div class="chip-row" role="radiogroup" aria-label="Filtered post display mode">
-        <button type="button" class="chip" role="radio" data-mode="transparent" aria-checked="false">Transparent</button>
-        <button type="button" class="chip" role="radio" data-mode="hidden" aria-checked="true">Hidden</button>
+    <header class="app-header">
+      <img class="brand-mark" src="../icons/icon48.png" alt="" aria-hidden="true" />
+      <div>
+        <h1>CleanIn</h1>
+        <p>Hide LinkedIn suggested and promoted posts</p>
       </div>
+    </header>
+
+    <nav class="mui-paper mui-tabs" aria-label="Settings sections">
+      <button class="mui-tab active" id="general-tab" type="button" role="tab" aria-selected="true" aria-controls="general-panel" data-tab-target="general-panel">
+        General
+      </button>
+      <button class="mui-tab" id="advanced-tab" type="button" role="tab" aria-selected="false" aria-controls="advanced-panel" data-tab-target="advanced-panel">
+        Advanced
+      </button>
+    </nav>
+
+    <section class="mui-paper tab-panel" id="general-panel" role="tabpanel" aria-labelledby="general-tab">
+      <div class="setting-list">
+        <label class="toggle-row" for="toggle-suggested">
+          <span class="setting-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M12 2 9.7 8.2 3 8.5l5.2 4.1-1.8 6.5 5.6-3.7 5.6 3.7-1.8-6.5L21 8.5l-6.7-.3L12 2Z" />
+            </svg>
+          </span>
+          <span class="toggle-label">
+            <span class="toggle-title">Hide suggested posts</span>
+          </span>
+          <span class="toggle-switch">
+            <input type="checkbox" id="toggle-suggested" />
+            <span class="slider"></span>
+          </span>
+        </label>
+
+        <label class="toggle-row" for="toggle-promoted">
+          <span class="setting-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 18.5v-13ZM7 7v2h10V7H7Zm0 4v2h6v-2H7Zm0 4v2h8v-2H7Z" />
+            </svg>
+          </span>
+          <span class="toggle-label">
+            <span class="toggle-title">Hide promoted posts</span>
+          </span>
+          <span class="toggle-switch">
+            <input type="checkbox" id="toggle-promoted" />
+            <span class="slider"></span>
+          </span>
+        </label>
+      </div>
+
+      <div class="setting-list">
+        <label class="toggle-row" for="toggle-linkedin-news">
+          <span class="setting-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M5 4h11.5A2.5 2.5 0 0 1 19 6.5V20H6.5A2.5 2.5 0 0 1 4 17.5V5a1 1 0 0 1 1-1Zm2 4v2h8V8H7Zm0 4v2h8v-2H7Zm0 4v2h6v-2H7Zm12-8h1a1 1 0 0 1 1 1v8.5A2.5 2.5 0 0 1 18.5 20H19V8Z" />
+            </svg>
+          </span>
+          <span class="toggle-label">
+            <span class="toggle-title">Hide news</span>
+          </span>
+          <span class="toggle-switch">
+            <input type="checkbox" id="toggle-linkedin-news" />
+            <span class="slider"></span>
+          </span>
+        </label>
+
+        <label class="toggle-row" for="toggle-puzzles">
+          <span class="setting-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M8 3a3 3 0 0 1 3 3v1h2V6a3 3 0 1 1 3 3h-1v2h2a3 3 0 1 1 0 6h-2v4h-4v-2a1 1 0 1 0-2 0v2H5v-6h2a1 1 0 1 0 0-2H5V7h4V6a1 1 0 1 0-1-1V3Z" />
+            </svg>
+          </span>
+          <span class="toggle-label">
+            <span class="toggle-title">Hide puzzles</span>
+          </span>
+          <span class="toggle-switch">
+            <input type="checkbox" id="toggle-puzzles" />
+            <span class="slider"></span>
+          </span>
+        </label>
+      </div>
+
     </section>
 
-    <section class="filter-section">
-      <h2>Main Content</h2>
-
-      <label class="toggle-row" for="toggle-suggested">
-        <span class="toggle-label">
-          <span class="toggle-title">Hide Suggested</span>
-          <span class="toggle-description">Removes posts LinkedIn recommends based on your activity</span>
+    <section class="mui-paper tab-panel hidden" id="advanced-panel" role="tabpanel" aria-labelledby="advanced-tab">
+      <label class="toggle-row" for="toggle-transparent-mode">
+        <span class="setting-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M12 4.5C7 4.5 2.7 7.6 1 12c1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5c-1.7-4.4-6-7.5-11-7.5Zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9Zm0-2a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
+          </svg>
         </span>
-        <div class="toggle-switch">
-          <input type="checkbox" id="toggle-suggested" />
-          <span class="slider"></span>
-        </div>
-      </label>
-
-      <label class="toggle-row" for="toggle-promoted">
         <span class="toggle-label">
-          <span class="toggle-title">Hide Promoted</span>
-          <span class="toggle-description">Removes sponsored ads and promoted content</span>
+          <span class="toggle-title">Show hidden content as transparent</span>
         </span>
-        <div class="toggle-switch">
-          <input type="checkbox" id="toggle-promoted" />
+        <span class="toggle-switch">
+          <input type="checkbox" id="toggle-transparent-mode" />
           <span class="slider"></span>
-        </div>
-      </label>
-
-      <label class="toggle-row" for="toggle-promoted-by">
-        <span class="toggle-label">
-          <span class="toggle-title">Hide Promoted by</span>
-          <span class="toggle-description">Removes feed posts labeled "Promoted by" a company or page</span>
         </span>
-        <div class="toggle-switch">
-          <input type="checkbox" id="toggle-promoted-by" />
-          <span class="slider"></span>
-        </div>
       </label>
 
       <label class="field-row" for="sidebar-phrases">
-        <span class="field-title">Filter Phrases</span>
-        <span class="field-description">One phrase per line. Matches are highlighted in transparent mode and removed in hidden mode.</span>
+        <span class="field-title">
+          <span class="setting-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M4 5h16v2H4V5Zm0 5h16v2H4v-2Zm0 5h10v2H4v-2Zm12.3-.7 1.7-1.7 1.4 1.4-1.7 1.7 1.7 1.7-1.4 1.4-1.7-1.7-1.7 1.7-1.4-1.4 1.7-1.7-1.7-1.7 1.4-1.4 1.7 1.7Z" />
+            </svg>
+          </span>
+          Hide posts containing these phrases
+        </span>
         <textarea id="sidebar-phrases" rows="5" spellcheck="false" placeholder="People you may know&#10;Suggested for you"></textarea>
       </label>
     </section>
 
-    <section class="filter-section">
-      <h2>Sidebar</h2>
-
-      <label class="toggle-row" for="toggle-linkedin-news">
-        <span class="toggle-label">
-          <span class="toggle-title">Hide LinkedIn News</span>
-          <span class="toggle-description">Removes the LinkedIn News top stories panel</span>
-        </span>
-        <div class="toggle-switch">
-          <input type="checkbox" id="toggle-linkedin-news" />
-          <span class="slider"></span>
-        </div>
-      </label>
-
-      <label class="toggle-row" for="toggle-puzzles">
-        <span class="toggle-label">
-          <span class="toggle-title">Hide Puzzles</span>
-          <span class="toggle-description">Removes the Today's puzzles panel</span>
-        </span>
-        <div class="toggle-switch">
-          <input type="checkbox" id="toggle-puzzles" />
-          <span class="slider"></span>
-        </div>
-      </label>
-    </section>
-    </div>
+    <footer class="panel-footer">
+      <a class="footer-link review-footer-link" href="https://chromewebstore.google.com/detail/cleanin-hide-linkedin-pro/nhnfpheccmajiphgfdehelakpblamgjp/reviews" target="_blank" rel="noreferrer">
+        Leave a review
+      </a>
+      <button class="author-button" id="open-author-dialog" type="button">
+        <img class="author-button-avatar" src="../assets/author-avatar.png" alt="" aria-hidden="true" />
+        About the author
+      </button>
+    </footer>
   </main>
+
+  <dialog class="author-dialog" id="author-dialog" aria-labelledby="author-dialog-title">
+    <div class="author-dialog-card">
+      <header class="author-dialog-header">
+        <div>
+          <h2 id="author-dialog-title">About</h2>
+        </div>
+        <button class="dialog-icon-button" id="close-author-dialog" type="button" aria-label="Close author dialog">
+          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+            <path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3 1.4 1.4Z" />
+          </svg>
+        </button>
+      </header>
+      <div class="author-dialog-body">
+        <div class="author-profile">
+          <a class="author-profile-link" href="https://www.linkedin.com/in/peter-w-cox" target="_blank" rel="noreferrer" aria-label="Open Peter Cox on LinkedIn">
+            <img src="../assets/author-avatar.png" alt="Peter Cox" />
+          </a>
+          <div>
+            <a class="author-name" href="https://www.linkedin.com/in/peter-w-cox" target="_blank" rel="noreferrer">
+              Peter Cox
+            </a>
+            <p>Senior .NET React Developer</p>
+          </div>
+        </div>
+        <p>
+          CleanIn was built by Peter Cox to make LinkedIn quieter by removing suggested,
+          promoted, and sidebar content that gets in the way of the feed.
+        </p>
+        <a class="review-link" href="https://chromewebstore.google.com/detail/cleanin-hide-linkedin-pro/nhnfpheccmajiphgfdehelakpblamgjp/reviews" target="_blank" rel="noreferrer">
+          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+            <path d="M12 2 9.2 8.7 2 9.3l5.5 4.7-1.7 7 6.2-3.7 6.2 3.7-1.7-7L22 9.3l-7.2-.6L12 2Z" />
+          </svg>
+          Leave a Chrome Web Store review
+        </a>
+      </div>
+    </div>
+  </dialog>
 
   <script src="sidepanel.js"></script>
 </body>

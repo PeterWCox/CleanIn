@@ -7,7 +7,7 @@ pr: none
 
 stages:
   - stage: BuildAndPublish
-    displayName: Build and publish artifacts
+    displayName: Build and publish QA dist
     jobs:
       - job: Build
         displayName: Build extension package
@@ -32,24 +32,11 @@ stages:
               zip -r "$(Build.ArtifactStagingDirectory)/dist.zip" . -x "*.DS_Store" "__MACOSX/*"
             displayName: Create dist ZIP
 
-          - script: |
-              version="$(node -e "console.log(JSON.parse(require('fs').readFileSync('dist/manifest.json', 'utf8')).version)")"
-              echo "##vso[task.setvariable variable=ExtensionVersion]${version}"
-              cp "$(Build.ArtifactStagingDirectory)/dist.zip" "$(Build.ArtifactStagingDirectory)/cleanin-chrome-store-v${version}.zip"
-            displayName: Create Chrome Web Store ZIP
-
           - task: PublishPipelineArtifact@1
             displayName: Publish QA dist ZIP
             inputs:
               targetPath: $(Build.ArtifactStagingDirectory)/dist.zip
               artifact: dist.zip
-              publishLocation: pipeline
-
-          - task: PublishPipelineArtifact@1
-            displayName: Publish Chrome Web Store ZIP
-            inputs:
-              targetPath: $(Build.ArtifactStagingDirectory)/cleanin-chrome-store-v$(ExtensionVersion).zip
-              artifact: chrome-store-zip
               publishLocation: pipeline
 
   - stage: QA
@@ -72,9 +59,37 @@ stages:
                 Test LinkedIn with the CleanIn extension enabled, including transparent and hidden modes, before resuming this stage.
               onTimeout: reject
 
+  - stage: ProduceChromeStoreZip
+    displayName: Produce Chrome Store ZIP
+    dependsOn: QA
+    jobs:
+      - job: ProduceStoreZip
+        displayName: Package production ZIP
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: Download QA dist ZIP
+            inputs:
+              artifact: dist.zip
+              path: $(Pipeline.Workspace)/qa-dist
+
+          - script: |
+              version="$(node -e "console.log(JSON.parse(require('fs').readFileSync('dist/manifest.json', 'utf8')).version)")"
+              echo "##vso[task.setvariable variable=ExtensionVersion]${version}"
+              cp "$(Pipeline.Workspace)/qa-dist/dist.zip" "$(Build.ArtifactStagingDirectory)/cleanin-chrome-store-v${version}.zip"
+            displayName: Create Chrome Web Store ZIP
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publish Chrome Web Store ZIP
+            inputs:
+              targetPath: $(Build.ArtifactStagingDirectory)/cleanin-chrome-store-v$(ExtensionVersion).zip
+              artifact: chrome-store-zip
+              publishLocation: pipeline
+
   - stage: ConfirmChromeStoreUpload
     displayName: Manual confirm Chrome Store upload
-    dependsOn: QA
+    dependsOn: ProduceChromeStoreZip
     jobs:
       - job: ConfirmStoreUpload
         displayName: Confirm Chrome Developer Store upload
@@ -88,6 +103,6 @@ stages:
               notifyUsers: ''
               instructions: |
                 Download the chrome-store-zip artifact from this run.
-                Upload cleanin-chrome-store-v1.3.1.zip to the Chrome Developer Store.
+                Upload the cleanin-chrome-store-v*.zip package to the Chrome Developer Store.
                 Resume this stage after the package has been uploaded successfully.
               onTimeout: reject

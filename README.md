@@ -16,7 +16,12 @@ The source code is available if you'd prefer to build it yourself: [https://gith
 ## Docs & store releases
 
 - Chrome Web Store form copy and justifications: [docs/chrome-web-store-privacy-answers.md](docs/chrome-web-store-privacy-answers.md) (see also [docs/README.md](docs/README.md)).
-- Release ZIPs are produced by the Azure pipeline artifacts.
+- Release TLDR:
+  1. Azure validates `dist/` and publishes only `dist.zip` for local QA.
+  2. Download `dist.zip`, unzip it, and test it locally with Load unpacked in Chrome.
+  3. If QA passes, resume the pipeline so it produces the Chrome Web Store ZIP.
+  4. Upload the generated `cleanin-chrome-store-v*.zip` artifact to the Chrome Developer Store.
+  5. After the store release is live, test the production extension.
 
 ## Developer instructions
 
@@ -27,7 +32,7 @@ The source code is available if you'd prefer to build it yourself: [https://gith
 5. Click Load unpacked and select the `dist/` folder.
 6. Visit [linkedin.com](https://www.linkedin.com/) or [linkedin.com/feed](https://www.linkedin.com/feed/) and open the extension side panel to adjust filters.
 
-Chrome Web Store releases and local unpacked installs both use [dist/](dist/) directly, with the normal `CleanIn` name and production icon. There is no local build step; Azure validates and zips the folder for QA and Chrome Web Store upload.
+Chrome Web Store releases and local unpacked installs both use [dist/](dist/) directly, with the normal `CleanIn` name and production icon. There is no local build step; Azure first zips the folder for QA, then only creates the Chrome Web Store artifact after manual QA is confirmed.
 
 ## Caveats
 - Only matches the English LinkedIn UI. If your LinkedIn is in French, *toutes mes excuses*.
