@@ -5,16 +5,17 @@ Copy you can paste into the Chrome Web Store **Privacy** tab. Written to match a
 ---
 
 # Chrome Store Description
-CleanIn is a simple chrome extension that hides unwanted feed content masquerading like real content such as:
+CleanIn is a simple chrome extension that hides slop content such as:
 
 1. Suggested posts
 2. Promoted and Promoted By posts
 3. Posts containing phrases you choose
-4. Sidebar content like News and Puzzles
+4. Sidebar junk like News and Puzzles
+5. Posts containing certain phrases (e.g. B2B marketing, Open to Work)
 
-They are hidden by default, but you can also show them as transparent if you desire. Phrase matches are highlighted in transparent mode and removed in hidden mode.
+You can toggle on/off this hiding behaviour by clicking the extensions icon. 
 
-The source code is available here if you'd prefer to build it yourself https://github.com/PeterWCox/CleanIn. I'm open to adding additional functionality, feel free to e-mail me!
+I welcome any suggested features or changes.
 
 ## sidePanel justification
 

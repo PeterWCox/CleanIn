@@ -16,20 +16,23 @@ The source code is available if you'd prefer to build it yourself: [https://gith
 ## Docs & store releases
 
 - Chrome Web Store form copy and justifications: [docs/chrome-web-store-privacy-answers.md](docs/chrome-web-store-privacy-answers.md) (see also [docs/README.md](docs/README.md)).
-- Packaged extension ZIPs for upload: [release/](release/).
+- Release TLDR:
+  1. Azure validates `dist/` and publishes only `dist.zip` for local QA.
+  2. Download `dist.zip`, unzip it, and test it locally with Load unpacked in Chrome.
+  3. If QA passes, resume the pipeline so it produces the Chrome Web Store ZIP.
+  4. Upload the generated `cleanin-chrome-store-v*.zip` artifact to the Chrome Developer Store.
+  5. After the store release is live, test the production extension.
 
 ## Developer instructions
 
 1. Clone this repo.
 2. Optional: [snippets/](snippets/) has small reference HTML files for the feed and sidebar shapes the content script looks for.
-3. Run `npm install`.
-4. Run `npm run build:dev`.
-5. Open `chrome://extensions` in Chrome.
-6. Toggle Developer mode on (top right).
-7. Click Load unpacked and select the generated `dist-dev/` folder.
-8. Visit [linkedin.com](https://www.linkedin.com/) or [linkedin.com/feed](https://www.linkedin.com/feed/) and open the extension side panel to adjust filters.
+3. Open `chrome://extensions` in Chrome.
+4. Toggle Developer mode on (top right).
+5. Click Load unpacked and select the `dist/` folder.
+6. Visit [linkedin.com](https://www.linkedin.com/) or [linkedin.com/feed](https://www.linkedin.com/feed/) and open the extension side panel to adjust filters.
 
-Chrome Web Store releases use [dist/](dist/) directly, which keeps the normal `CleanIn` name and white-circle icon. Local development builds use the generated `dist-dev/` folder with the `CleanIn Dev` name and yellow-circle icon so they are easy to distinguish in Chrome. Both folders are generated from [extension-src/](extension-src/) by [vite.config.ts](vite.config.ts): use `npm run build:prod` for the store-safe extension, `npm run build:dev` for local development, and `npm run package:prod` to create the upload ZIP.
+Chrome Web Store releases and local unpacked installs both use [dist/](dist/) directly, with the normal `CleanIn` name and production icon. There is no local build step; Azure first zips the folder for QA, then only creates the Chrome Web Store artifact after manual QA is confirmed.
 
 ## Caveats
 - Only matches the English LinkedIn UI. If your LinkedIn is in French, *toutes mes excuses*.
