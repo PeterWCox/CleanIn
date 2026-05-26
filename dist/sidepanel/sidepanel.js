@@ -1,10 +1,14 @@
 const toggleSuggested = document.getElementById('toggle-suggested');
 const togglePromoted = document.getElementById('toggle-promoted');
-const togglePromotedBy = document.getElementById('toggle-promoted-by');
 const toggleLinkedInNews = document.getElementById('toggle-linkedin-news');
 const togglePuzzles = document.getElementById('toggle-puzzles');
+const toggleTransparentMode = document.getElementById('toggle-transparent-mode');
 const sidebarPhrases = document.getElementById('sidebar-phrases');
-const chips = [...document.querySelectorAll('.chip[data-mode]')];
+const openAuthorDialog = document.getElementById('open-author-dialog');
+const closeAuthorDialog = document.getElementById('close-author-dialog');
+const authorDialog = document.getElementById('author-dialog');
+const tabButtons = document.querySelectorAll('.mui-tab');
+const tabPanels = document.querySelectorAll('.tab-panel');
 const PHRASE_INPUT_DEBOUNCE_MS = 600;
 
 const defaultSettings = {
@@ -20,29 +24,18 @@ const defaultSettings = {
 let transparentMode = defaultSettings.transparentMode;
 let phraseInputTimer = null;
 
-function renderChips() {
-  chips.forEach((chip) => {
-    const active =
-      (chip.dataset.mode === 'transparent' && transparentMode) ||
-      (chip.dataset.mode === 'hidden' && !transparentMode);
-    chip.classList.toggle('chip-active', active);
-    chip.setAttribute('aria-checked', active ? 'true' : 'false');
-  });
-}
-
 // ---------------------------------------------------------------------------
 // Load persisted settings and reflect them in the UI
 // ---------------------------------------------------------------------------
 
 chrome.storage.sync.get(defaultSettings, (settings) => {
   toggleSuggested.checked = settings.hideSuggested;
-  togglePromoted.checked = settings.hidePromoted;
-  togglePromotedBy.checked = settings.hidePromotedBy;
+  togglePromoted.checked = settings.hidePromoted || settings.hidePromotedBy;
   toggleLinkedInNews.checked = settings.hideLinkedInNews;
   togglePuzzles.checked = settings.hidePuzzles;
   sidebarPhrases.value = normalizePhraseList(settings.hideSidebarPhrases).join('\n');
   transparentMode = settings.transparentMode;
-  renderChips();
+  toggleTransparentMode.checked = transparentMode;
 });
 
 // ---------------------------------------------------------------------------
@@ -55,7 +48,7 @@ function onToggleChange() {
   const settings = {
     hideSuggested: toggleSuggested.checked,
     hidePromoted: togglePromoted.checked,
-    hidePromotedBy: togglePromotedBy.checked,
+    hidePromotedBy: togglePromoted.checked,
     hideLinkedInNews: toggleLinkedInNews.checked,
     hidePuzzles: togglePuzzles.checked,
     hideSidebarPhrases: getSidebarPhrases(),
@@ -81,17 +74,40 @@ function normalizePhraseList(value) {
 
 toggleSuggested.addEventListener('change', onToggleChange);
 togglePromoted.addEventListener('change', onToggleChange);
-togglePromotedBy.addEventListener('change', onToggleChange);
 toggleLinkedInNews.addEventListener('change', onToggleChange);
 togglePuzzles.addEventListener('change', onToggleChange);
 sidebarPhrases.addEventListener('input', onPhraseInput);
+toggleTransparentMode.addEventListener('change', () => {
+  transparentMode = toggleTransparentMode.checked;
+  onToggleChange();
+});
 
-chips.forEach((chip) => {
-  chip.addEventListener('click', () => {
-    const next = chip.dataset.mode === 'transparent';
-    if (next === transparentMode) return;
-    transparentMode = next;
-    renderChips();
-    onToggleChange();
+tabButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    const targetPanelId = button.dataset.tabTarget;
+
+    tabButtons.forEach((tabButton) => {
+      const isActive = tabButton === button;
+      tabButton.classList.toggle('active', isActive);
+      tabButton.setAttribute('aria-selected', String(isActive));
+    });
+
+    tabPanels.forEach((panel) => {
+      panel.classList.toggle('hidden', panel.id !== targetPanelId);
+    });
   });
+});
+
+openAuthorDialog.addEventListener('click', () => {
+  authorDialog.showModal();
+});
+
+closeAuthorDialog.addEventListener('click', () => {
+  authorDialog.close();
+});
+
+authorDialog.addEventListener('click', (event) => {
+  if (event.target === authorDialog) {
+    authorDialog.close();
+  }
 });
