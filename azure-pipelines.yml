@@ -1,7 +1,10 @@
 trigger:
   branches:
+    exclude:
+      - '*'
+  tags:
     include:
-      - main
+      - V*.*.*
 
 pr: none
 
@@ -18,6 +21,14 @@ stages:
             displayName: Use Node.js 20
             inputs:
               versionSpec: 20.x
+
+          - script: |
+              tag="${BUILD_SOURCEBRANCH#refs/tags/}"
+              if ! printf '%s\n' "$tag" | grep -Eq '^V[0-9]+\.[0-9]+\.[0-9]+$'; then
+                echo "This pipeline only runs for release tags named VX.Y.Z, for example V1.3.2."
+                exit 1
+              fi
+            displayName: Validate release tag
 
           - script: |
               python3 -m json.tool dist/manifest.json >/dev/null
