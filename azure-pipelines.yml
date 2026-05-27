@@ -91,14 +91,13 @@ stages:
 
           - script: |
               version="$(node -e "console.log(JSON.parse(require('fs').readFileSync('dist/manifest.json', 'utf8')).version)")"
-              echo "##vso[task.setvariable variable=ExtensionVersion]${version}"
               cp "$(Pipeline.Workspace)/qa-dist/dist.zip" "$(Build.ArtifactStagingDirectory)/cleanin-chrome-store-v${version}.zip"
             displayName: Create Chrome Web Store ZIP
 
           - task: PublishPipelineArtifact@1
             displayName: Publish Chrome Web Store ZIP
             inputs:
-              targetPath: $(Build.ArtifactStagingDirectory)/cleanin-chrome-store-v$(ExtensionVersion).zip
+              targetPath: $(Build.ArtifactStagingDirectory)
               artifact: chrome-store-zip
               publishLocation: pipeline
 
