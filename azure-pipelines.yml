@@ -1,8 +1,5 @@
 trigger:
   branches:
-    exclude:
-      - '*'
-  tags:
     include:
       - V*.*.*
 
@@ -23,12 +20,19 @@ stages:
               versionSpec: 20.x
 
           - script: |
-              tag="${BUILD_SOURCEBRANCH#refs/tags/}"
-              if ! printf '%s\n' "$tag" | grep -Eq '^V[0-9]+\.[0-9]+\.[0-9]+$'; then
-                echo "This pipeline only runs for release tags named VX.Y.Z, for example V1.3.2."
+              branch="${BUILD_SOURCEBRANCH#refs/heads/}"
+              if ! printf '%s\n' "$branch" | grep -Eq '^V[0-9]+\.[0-9]+\.[0-9]+$'; then
+                echo "This pipeline only runs for release branches named VX.Y.Z, for example V1.3.3."
                 exit 1
               fi
-            displayName: Validate release tag
+
+              manifest_version="$(node -e "console.log(JSON.parse(require('fs').readFileSync('dist/manifest.json', 'utf8')).version)")"
+              branch_version="${branch#V}"
+              if [ "$manifest_version" != "$branch_version" ]; then
+                echo "dist/manifest.json version ${manifest_version} does not match branch ${branch}."
+                exit 1
+              fi
+            displayName: Validate release branch version
 
           - script: |
               python3 -m json.tool dist/manifest.json >/dev/null
