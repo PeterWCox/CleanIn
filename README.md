@@ -17,15 +17,14 @@ The source code is available if you'd prefer to build it yourself: [https://gith
 
 - Chrome Web Store form copy and justifications: [docs/chrome-web-store-privacy-answers.md](docs/chrome-web-store-privacy-answers.md) (see also [docs/README.md](docs/README.md)).
 - Release TLDR:
-  1. Create the release branch and bump `dist/manifest.json` on that branch.
-  2. Push a `VX.Y.Z` tag, for example `V1.3.2`, to start Azure. `main` does not trigger builds.
-  3. Azure validates `dist/` and publishes only `dist.zip` for local QA.
-  4. Download `dist.zip`, unzip it, and test it locally with Load unpacked in Chrome.
-  5. If QA passes, resume the pipeline so it produces the Chrome Web Store ZIP.
-  6. Upload the generated `cleanin-chrome-store-v*.zip` artifact to the Chrome Developer Store.
-  7. Release the uploaded package through the Chrome Web Store.
-  8. After the store release is live, test the production extension.
-  9. Only after QA, Chrome Store release, and production testing are all complete, open the PR into `main`.
+  1. Create a `VX.Y.Z` release branch, for example `V1.3.3`, and bump `dist/manifest.json` on that branch.
+  2. Push the branch to start Azure. `main` does not trigger builds.
+  3. Azure validates that the manifest version matches the branch name, then runs `Build Dist` and publishes `dist.zip` for local QA.
+  4. Complete the `QA (Manual)` stage by downloading `dist.zip`, unzipping it, and testing it locally with Load unpacked in Chrome.
+  5. Resume the pipeline so `Build Chrome Store ZIP` produces the `cleanin-chrome-store-v*.zip` artifact.
+  6. Complete `Upload to Chrome Store (Manual)` after uploading the generated ZIP to the Chrome Developer Store.
+  7. Release the uploaded package through the Chrome Web Store, then complete `PROD Smoke Test (Manual)` after testing the live production extension.
+  8. Only after QA, Chrome Store release, and production testing are all complete, open the PR into `main`.
 
 ## Developer instructions
 
