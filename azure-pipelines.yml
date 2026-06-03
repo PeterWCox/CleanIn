@@ -147,7 +147,9 @@ stages:
 
   - stage: CreateMergePullRequest
     displayName: Create PR to Merge Release Branch into Main
-    dependsOn: ProdSmokeTest
+    dependsOn:
+      - BuildDist
+      - ProdSmokeTest
     condition: succeeded('ProdSmokeTest')
     jobs:
       - job: CreatePullRequest
