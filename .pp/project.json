@@ -1,0 +1,9 @@
+{
+  "containerColor": "#0A66C2",
+  "showProject": true,
+  "azureDevops": {
+    "organization": "SideQuestAI",
+    "project": "CleanIn",
+    "pipeline": 39
+  }
+}

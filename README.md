@@ -24,7 +24,7 @@ The source code is available if you'd prefer to build it yourself: [https://gith
   5. Resume the pipeline so `Build Chrome Store ZIP` produces the `cleanin-chrome-store-v*.zip` artifact.
   6. Complete `Upload to Chrome Store (Manual)` after uploading the generated ZIP to the Chrome Developer Store.
   7. Release the uploaded package through the Chrome Web Store, then complete `PROD Smoke Test (Manual)` after testing the live production extension.
-  8. Only after QA, Chrome Store release, and production testing are all complete, open the PR into `main`.
+  8. After QA, Chrome Store release, and production testing are all complete, Azure opens the PR into `main`.
 
 ## Developer instructions
 
