@@ -194,6 +194,11 @@ main {
   fill: currentColor;
 }
 
+.setting-icon-emoji {
+  font-size: 20px;
+  line-height: 1;
+}
+
 .toggle-label {
   display: flex;
   flex-direction: column;
