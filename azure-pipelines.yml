@@ -108,14 +108,14 @@ stages:
               artifact: chrome-store-zip
               publishLocation: pipeline
 
-      - job: ApproveStoreUpload
-        displayName: Approve Chrome Store upload
+      - job: UploadToChromeStore
+        displayName: Upload to Chrome Store
         dependsOn: BuildStoreZip
         pool: server
         timeoutInMinutes: 4320
         steps:
           - task: ManualValidation@0
-            displayName: Approve Chrome Store ZIP upload
+            displayName: Confirm Chrome Store upload
             timeoutInMinutes: 4320
             inputs:
               notifyUsers: ''
@@ -127,7 +127,7 @@ stages:
 
       - job: ApproveProdSmokeTest
         displayName: Approve production smoke test
-        dependsOn: ApproveStoreUpload
+        dependsOn: UploadToChromeStore
         pool: server
         timeoutInMinutes: 4320
         steps:
