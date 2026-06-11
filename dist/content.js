@@ -19,6 +19,7 @@ let applyDebounceTimer = null;
 let wakeApplyTimers = [];
 let sidebarPollTimers = [];
 let lastWakeApplyAt = 0;
+let lastRouteKey = getRouteKey();
 let phraseHighlightSignature = null;
 let animateFilteredHides = false;
 
@@ -146,10 +147,10 @@ function scheduleWakeApply() {
 
 function setupLifecycleListeners() {
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') scheduleWakeApply();
+    if (document.visibilityState === 'visible') handleRouteChange({ refreshFeed: true });
   });
-  window.addEventListener('focus', scheduleWakeApply);
-  window.addEventListener('pageshow', scheduleWakeApply);
+  window.addEventListener('focus', () => handleRouteChange({ refreshFeed: true }));
+  window.addEventListener('pageshow', () => handleRouteChange({ refreshFeed: true }));
 }
 
 function applySidebarWidgets() {
@@ -213,6 +214,29 @@ function isLinkedInFeedPage() {
   return location.hostname === 'www.linkedin.com' && (location.pathname === '/' || FEED_PATH_PATTERN.test(location.pathname));
 }
 
+function getRouteKey() {
+  return `${location.pathname}${location.search}`;
+}
+
+function handleRouteChange({ refreshFeed = false } = {}) {
+  const routeKey = getRouteKey();
+  const routeChanged = routeKey !== lastRouteKey;
+  lastRouteKey = routeKey;
+
+  if (!isLinkedInFeedPage()) {
+    teardownFiltering();
+    removeInjectedNavButton();
+    return;
+  }
+
+  if (routeChanged || !feedObserver) {
+    init();
+    return;
+  }
+
+  if (refreshFeed) scheduleWakeApply();
+}
+
 function teardownFiltering() {
   if (feedObserver) {
     feedObserver.disconnect();
@@ -261,11 +285,23 @@ function removeInjectedNavButton() {
 // Re-run init on SPA navigation (LinkedIn swaps content without a full page reload)
 function setupNavigationListener() {
   const originalPushState = history.pushState.bind(history);
+  const originalReplaceState = history.replaceState.bind(history);
+
   history.pushState = (...args) => {
     originalPushState(...args);
-    setTimeout(init, 300);
+    setTimeout(handleRouteChange, 300);
   };
-  window.addEventListener('popstate', () => setTimeout(init, 300));
+  history.replaceState = (...args) => {
+    originalReplaceState(...args);
+    setTimeout(handleRouteChange, 300);
+  };
+
+  window.addEventListener('popstate', () => setTimeout(handleRouteChange, 300));
+  window.addEventListener('hashchange', () => setTimeout(handleRouteChange, 300));
+
+  setInterval(() => {
+    if (getRouteKey() !== lastRouteKey) handleRouteChange();
+  }, 1000);
 }
 
 function loadSettings() {
