@@ -6,6 +6,7 @@ const defaultSettings = {
   hidePromotedBy: true,
   hideLinkedInNews: true,
   hidePuzzles: true,
+  hideSidebarAds: true,
   hideSidebarPhrases: [],
   transparentMode: false,
 };
@@ -39,6 +40,10 @@ const FILTER_STYLES = {
   puzzles: {
     outline: '2px solid rgba(204, 122, 0, 0.4)',
     backgroundColor: 'rgba(204, 122, 0, 0.06)',
+  },
+  ad: {
+    outline: '2px solid rgba(220, 0, 0, 0.4)',
+    backgroundColor: 'rgba(220, 0, 0, 0.06)',
   },
   phrase: {
     outline: '2px solid rgba(102, 102, 102, 0.4)',
@@ -139,13 +144,14 @@ function applySidebarWidgets() {
   if (newsWidget) applySidebarWidget(newsWidget, 'news');
   const puzzlesWidget = findSidebarWidget("Today\u2019s puzzles", 'a[href*="/games/"]');
   if (puzzlesWidget) applySidebarWidget(puzzlesWidget, 'puzzles');
+  applySidebarAdWidgets();
   applySidebarCardFilters();
   applySidebarPhraseFilters();
 }
 
 function syncExistingHiddenSidebarWidgets() {
   document
-    .querySelectorAll('[data-lfr-hidden="news"], [data-lfr-hidden="puzzles"], [data-lfr-hidden="phrase"], [data-lfr-hidden="suggested"], [data-lfr-hidden="promoted"], [data-lfr-hidden="promoted-by"]')
+    .querySelectorAll('[data-lfr-hidden="news"], [data-lfr-hidden="puzzles"], [data-lfr-hidden="ad"], [data-lfr-hidden="phrase"], [data-lfr-hidden="suggested"], [data-lfr-hidden="promoted"], [data-lfr-hidden="promoted-by"]')
     .forEach((card) => {
       if (!card.closest(SIDEBAR_ROOT_SELECTOR)) return;
 
@@ -153,6 +159,7 @@ function syncExistingHiddenSidebarWidgets() {
       const shouldKeepHidden =
         (key === 'news' && currentSettings.hideLinkedInNews) ||
         (key === 'puzzles' && currentSettings.hidePuzzles) ||
+        (key === 'ad' && currentSettings.hideSidebarAds) ||
         (key === 'phrase' && getMatchingSidebarPhrase(card, normalizePhraseList(currentSettings.hideSidebarPhrases))) ||
         (key === 'suggested' && currentSettings.hideSuggested) ||
         (key === 'promoted' && currentSettings.hidePromoted) ||
@@ -364,7 +371,8 @@ function waitForSidebarWidget(labelText, contentSelector, key) {
 function applySidebarWidget(widget, key) {
   const shouldHide =
     (key === 'news' && currentSettings.hideLinkedInNews) ||
-    (key === 'puzzles' && currentSettings.hidePuzzles);
+    (key === 'puzzles' && currentSettings.hidePuzzles) ||
+    (key === 'ad' && currentSettings.hideSidebarAds);
 
   // The widget element may be nested; find the top-level card container.
   const card = findSidebarCardContainer(widget);
@@ -383,6 +391,32 @@ function applySidebarWidget(widget, key) {
     console.log(`[LFR] Showing sidebar widget: ${key}`);
     clearWidgetStyle(card);
   }
+}
+
+function applySidebarAdWidgets() {
+  const adFrames = [...document.querySelectorAll(SIDEBAR_ROOT_SELECTOR)]
+    .filter(isEligibleSidebarRoot)
+    .flatMap((root) => [...root.querySelectorAll('iframe')].filter(isVisibleElement));
+
+  const activeCards = new Set();
+
+  adFrames.forEach((frame) => {
+    const card = findSidebarCardContainer(frame);
+    if (!card || !isReasonableSidebarWidget(card)) return;
+    activeCards.add(card);
+    applySidebarWidget(frame, 'ad');
+  });
+
+  [...document.querySelectorAll('[data-lfr-hidden="ad"]')]
+    .filter((card) => card.closest(SIDEBAR_ROOT_SELECTOR))
+    .forEach((card) => {
+      if (activeCards.has(card)) return;
+      if (card.querySelector('iframe') && currentSettings.hideSidebarAds) {
+        applyWidgetStyle(card, 'ad');
+      } else {
+        clearWidgetStyle(card);
+      }
+    });
 }
 
 function applySidebarPhraseFilters() {
@@ -524,11 +558,28 @@ function findCardContainer(el) {
 }
 
 function applyWidgetStyle(element, key) {
+  if (key === 'ad') {
+    applySidebarAdStyle(element);
+    return;
+  }
+
   if (currentSettings.transparentMode) {
     applyTransparentFilterStyle(element, key);
   } else {
     applyHiddenFilterStyle(element);
   }
+}
+
+function applySidebarAdStyle(element) {
+  if (currentSettings.transparentMode) {
+    applyTransparentFilterStyle(element, 'ad');
+    return;
+  }
+
+  clearFilteredElementStyle(element);
+  element.style.opacity = '0';
+  element.style.visibility = 'hidden';
+  element.style.pointerEvents = 'none';
 }
 
 function clearWidgetStyle(element) {
@@ -889,6 +940,7 @@ function applyTransparentFilterStyle(element, key) {
   element.style.display = 'block';
   element.style.transition = '';
   element.style.opacity = '0.4';
+  element.style.visibility = '';
   element.style.outline = style.outline;
   element.style.backgroundColor = style.backgroundColor;
   element.style.backgroundImage = '';
@@ -923,6 +975,7 @@ function clearFilteredElementStyle(element) {
   element.style.display = '';
   element.style.transition = '';
   element.style.opacity = '';
+  element.style.visibility = '';
   element.style.outline = '';
   element.style.backgroundColor = '';
   element.style.backgroundImage = '';

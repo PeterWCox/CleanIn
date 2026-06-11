@@ -2,6 +2,7 @@ const toggleSuggested = document.getElementById('toggle-suggested');
 const togglePromoted = document.getElementById('toggle-promoted');
 const toggleLinkedInNews = document.getElementById('toggle-linkedin-news');
 const togglePuzzles = document.getElementById('toggle-puzzles');
+const toggleSidebarAds = document.getElementById('toggle-sidebar-ads');
 const toggleTransparentMode = document.getElementById('toggle-transparent-mode');
 const sidebarPhrases = document.getElementById('sidebar-phrases');
 const tabButtons = document.querySelectorAll('.mui-tab');
@@ -14,6 +15,7 @@ const defaultSettings = {
   hidePromotedBy: true,
   hideLinkedInNews: true,
   hidePuzzles: true,
+  hideSidebarAds: true,
   hideSidebarPhrases: [],
   transparentMode: false,
 };
@@ -30,6 +32,7 @@ chrome.storage.sync.get(defaultSettings, (settings) => {
   togglePromoted.checked = settings.hidePromoted || settings.hidePromotedBy;
   toggleLinkedInNews.checked = settings.hideLinkedInNews;
   togglePuzzles.checked = settings.hidePuzzles;
+  toggleSidebarAds.checked = settings.hideSidebarAds;
   sidebarPhrases.value = normalizePhraseList(settings.hideSidebarPhrases).join('\n');
   transparentMode = settings.transparentMode;
   toggleTransparentMode.checked = transparentMode;
@@ -48,6 +51,7 @@ function onToggleChange() {
     hidePromotedBy: togglePromoted.checked,
     hideLinkedInNews: toggleLinkedInNews.checked,
     hidePuzzles: togglePuzzles.checked,
+    hideSidebarAds: toggleSidebarAds.checked,
     hideSidebarPhrases: getSidebarPhrases(),
     transparentMode,
   };
@@ -73,6 +77,7 @@ toggleSuggested.addEventListener('change', onToggleChange);
 togglePromoted.addEventListener('change', onToggleChange);
 toggleLinkedInNews.addEventListener('change', onToggleChange);
 togglePuzzles.addEventListener('change', onToggleChange);
+toggleSidebarAds.addEventListener('change', onToggleChange);
 sidebarPhrases.addEventListener('input', onPhraseInput);
 toggleTransparentMode.addEventListener('change', () => {
   transparentMode = toggleTransparentMode.checked;

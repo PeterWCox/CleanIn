@@ -51,6 +51,7 @@ const defaultSettings = {
   hidePromotedBy: true,
   hideLinkedInNews: true,
   hidePuzzles: true,
+  hideSidebarAds: true,
   hideSidebarPhrases: [],
   transparentMode: false,
 };
