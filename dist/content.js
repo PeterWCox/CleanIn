@@ -14,8 +14,10 @@ const defaultSettings = {
 let currentSettings = { ...defaultSettings };
 let feedObserver = null;
 let feedInterval = null;
+let feedPollTimer = null;
 let applyDebounceTimer = null;
 let wakeApplyTimers = [];
+let sidebarPollTimers = [];
 let lastWakeApplyAt = 0;
 let phraseHighlightSignature = null;
 let animateFilteredHides = false;
@@ -54,6 +56,7 @@ const FILTER_STYLES = {
 const POST_FILTER_KEYS = new Set(['suggested', 'promoted', 'promoted-by', 'phrase']);
 const SIDEBAR_FILTER_KEYS = new Set(['suggested', 'promoted', 'promoted-by']);
 const SIDEBAR_ROOT_SELECTOR = 'aside, [role="complementary"], .scaffold-layout__aside';
+const FEED_PATH_PATTERN = /^\/feed(?:\/|$)/;
 const SIDEBAR_WIDGET_MAX_WIDTH = 420;
 const SIDEBAR_WIDGET_MAX_HEIGHT = 900;
 const PHRASE_HIGHLIGHT_ATTR = 'data-lfr-phrase-highlight';
@@ -100,6 +103,10 @@ function hasPostLabel(postEl, predicate) {
 }
 
 function scheduleApply() {
+  if (!isLinkedInFeedPage()) {
+    teardownFiltering();
+    return;
+  }
   if (applyDebounceTimer) return;
   applyDebounceTimer = setTimeout(() => {
     applyDebounceTimer = null;
@@ -108,12 +115,20 @@ function scheduleApply() {
 }
 
 function applyAllFilters() {
+  if (!isLinkedInFeedPage()) {
+    teardownFiltering();
+    return;
+  }
   applyFeedFilters();
   applySidebarWidgets();
   applyStatusMenuPencilIcons();
 }
 
 function scheduleWakeApply() {
+  if (!isLinkedInFeedPage()) {
+    teardownFiltering();
+    return;
+  }
   wakeApplyTimers.forEach(clearTimeout);
   wakeApplyTimers = [];
 
@@ -178,13 +193,58 @@ function syncExistingHiddenSidebarWidgets() {
 // ---------------------------------------------------------------------------
 
 function init() {
+  if (!isLinkedInFeedPage()) {
+    teardownFiltering();
+    removeInjectedNavButton();
+    return;
+  }
+
   loadSettings().then((settings) => {
+    if (!isLinkedInFeedPage()) return;
     currentSettings = settings;
     waitForFeed();
     waitForSidebarWidget('LinkedIn News', 'a[href*="/news/story/"]', 'news');
     waitForSidebarWidget("Today\u2019s puzzles", 'a[href*="/games/"]', 'puzzles');
     removeInjectedNavButton();
   });
+}
+
+function isLinkedInFeedPage() {
+  return location.hostname === 'www.linkedin.com' && (location.pathname === '/' || FEED_PATH_PATTERN.test(location.pathname));
+}
+
+function teardownFiltering() {
+  if (feedObserver) {
+    feedObserver.disconnect();
+    feedObserver = null;
+  }
+  if (feedInterval) {
+    clearInterval(feedInterval);
+    feedInterval = null;
+  }
+  if (feedPollTimer) {
+    clearInterval(feedPollTimer);
+    feedPollTimer = null;
+  }
+  if (applyDebounceTimer) {
+    clearTimeout(applyDebounceTimer);
+    applyDebounceTimer = null;
+  }
+  wakeApplyTimers.forEach(clearTimeout);
+  wakeApplyTimers = [];
+  sidebarPollTimers.forEach(clearInterval);
+  sidebarPollTimers = [];
+  clearFilteredPageStyles();
+}
+
+function clearFilteredPageStyles() {
+  document.querySelectorAll('[data-lfr-hidden]').forEach((element) => {
+    delete element.dataset.lfrHidden;
+    delete element.dataset.lfrPhrase;
+    delete element.dataset.lfrPhraseScope;
+    clearFilteredElementStyle(element);
+  });
+  clearPhraseHighlights();
 }
 
 // ---------------------------------------------------------------------------
@@ -243,9 +303,16 @@ function waitForFeed() {
     return;
   }
 
-  const poll = setInterval(() => {
+  if (feedPollTimer) clearInterval(feedPollTimer);
+  feedPollTimer = setInterval(() => {
+    if (!isLinkedInFeedPage()) {
+      clearInterval(feedPollTimer);
+      feedPollTimer = null;
+      return;
+    }
     if (getFeed()) {
-      clearInterval(poll);
+      clearInterval(feedPollTimer);
+      feedPollTimer = null;
       console.log('[LFR] Feed container found (after poll).');
       applyFeedFilters();
     }
@@ -269,7 +336,7 @@ function attachFeedObserver() {
   // Apply a few times shortly after attach to handle posts that render
   // asynchronously after the container exists.
   [100, 500, 1500, 3000].forEach((ms) => {
-    setTimeout(applyFeedFilters, ms);
+    setTimeout(applyAllFilters, ms);
   });
 }
 
@@ -359,13 +426,20 @@ function waitForSidebarWidget(labelText, contentSelector, key) {
   }
 
   const poll = setInterval(() => {
+    if (!isLinkedInFeedPage()) {
+      clearInterval(poll);
+      sidebarPollTimers = sidebarPollTimers.filter((timer) => timer !== poll);
+      return;
+    }
     const widget = findSidebarWidget(labelText, contentSelector);
     if (widget) {
       clearInterval(poll);
+      sidebarPollTimers = sidebarPollTimers.filter((timer) => timer !== poll);
       console.log(`[LFR] Sidebar widget "${labelText}" found (after poll).`);
       applySidebarWidget(widget, key);
     }
   }, 500);
+  sidebarPollTimers.push(poll);
 }
 
 function applySidebarWidget(widget, key) {
