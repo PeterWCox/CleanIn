@@ -79,8 +79,8 @@ stages:
                 Test LinkedIn with the CleanIn extension enabled, including transparent and hidden modes, before resuming this stage.
               onTimeout: reject
 
-  - stage: BuildChromeStoreZip
-    displayName: Build Chrome Store ZIP
+  - stage: Deployment
+    displayName: Deployment
     dependsOn: QA
     jobs:
       - job: BuildStoreZip
@@ -106,51 +106,45 @@ stages:
               artifact: chrome-store-zip
               publishLocation: pipeline
 
-  - stage: UploadToChromeStore
-    displayName: Upload to Chrome Store (Manual)
-    dependsOn: BuildChromeStoreZip
-    jobs:
-      - job: UploadStoreZip
-        displayName: Upload Chrome Developer Store ZIP
+      - job: ApproveStoreUpload
+        displayName: Approve Chrome Store upload
+        dependsOn: BuildStoreZip
         pool: server
         timeoutInMinutes: 4320
         steps:
           - task: ManualValidation@0
-            displayName: Confirm Chrome Store ZIP upload
+            displayName: Approve Chrome Store ZIP upload
             timeoutInMinutes: 4320
             inputs:
               notifyUsers: ''
               instructions: |
                 Download the chrome-store-zip artifact from this run.
                 Upload the cleanin-chrome-store-v*.zip package to the Chrome Developer Store.
-                Resume this stage after the package has been uploaded successfully.
+                Resume this job after the package has been uploaded successfully.
               onTimeout: reject
 
-  - stage: ProdSmokeTest
-    displayName: PROD Smoke Test (Manual)
-    dependsOn: UploadToChromeStore
-    jobs:
-      - job: ManualProdSmokeTest
-        displayName: Manual production smoke test
+      - job: ApproveProdSmokeTest
+        displayName: Approve production smoke test
+        dependsOn: ApproveStoreUpload
         pool: server
         timeoutInMinutes: 4320
         steps:
           - task: ManualValidation@0
-            displayName: Confirm production smoke test
+            displayName: Approve production smoke test
             timeoutInMinutes: 4320
             inputs:
               notifyUsers: ''
               instructions: |
                 After the Chrome Web Store release is live, install or update CleanIn from the public listing.
-                Test LinkedIn with the production extension enabled, including transparent and hidden modes, before completing this stage.
+                Test LinkedIn with the production extension enabled, including transparent and hidden modes, before completing this job.
               onTimeout: reject
 
   - stage: CreateMergePullRequest
     displayName: Create PR to Merge Release Branch into Main
     dependsOn:
       - BuildDist
-      - ProdSmokeTest
-    condition: succeeded('ProdSmokeTest')
+      - Deployment
+    condition: succeeded('Deployment')
     jobs:
       - job: CreatePullRequest
         displayName: Create Azure Repos Pull Request
