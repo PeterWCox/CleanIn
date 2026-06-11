@@ -1,3 +1,5 @@
+name: CleanIn
+
 trigger:
   branches:
     include:
@@ -106,9 +108,12 @@ stages:
               artifact: chrome-store-zip
               publishLocation: pipeline
 
+  - stage: UploadToChromeStore
+    displayName: Upload to Chrome Store
+    dependsOn: Deployment
+    jobs:
       - job: ApproveStoreUpload
         displayName: Approve Chrome Store upload
-        dependsOn: BuildStoreZip
         pool: server
         timeoutInMinutes: 4320
         steps:
@@ -123,9 +128,12 @@ stages:
                 Resume this job after the package has been uploaded successfully.
               onTimeout: reject
 
+  - stage: ProdSmokeTest
+    displayName: PROD Smoke Test
+    dependsOn: UploadToChromeStore
+    jobs:
       - job: ApproveProdSmokeTest
         displayName: Approve production smoke test
-        dependsOn: ApproveStoreUpload
         pool: server
         timeoutInMinutes: 4320
         steps:
@@ -143,8 +151,8 @@ stages:
     displayName: Create PR to Merge Release Branch into Main
     dependsOn:
       - BuildDist
-      - Deployment
-    condition: succeeded('Deployment')
+      - ProdSmokeTest
+    condition: succeeded('ProdSmokeTest')
     jobs:
       - job: CreatePullRequest
         displayName: Create Azure Repos Pull Request
