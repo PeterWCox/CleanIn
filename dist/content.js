@@ -298,10 +298,7 @@ function waitForFeed() {
   applyFeedFilters();
 
   const feed = getFeed();
-  if (feed) {
-    console.log('[LFR] Feed observer attached.');
-    return;
-  }
+  if (feed) return;
 
   if (feedPollTimer) clearInterval(feedPollTimer);
   feedPollTimer = setInterval(() => {
@@ -313,7 +310,6 @@ function waitForFeed() {
     if (getFeed()) {
       clearInterval(feedPollTimer);
       feedPollTimer = null;
-      console.log('[LFR] Feed container found (after poll).');
       applyFeedFilters();
     }
   }, 500);
@@ -420,7 +416,6 @@ function findSidebarCardContainer(el) {
 function waitForSidebarWidget(labelText, contentSelector, key) {
   const widget = findSidebarWidget(labelText, contentSelector);
   if (widget) {
-    console.log(`[LFR] Sidebar widget "${labelText}" found.`);
     applySidebarWidget(widget, key);
     return;
   }
@@ -435,7 +430,6 @@ function waitForSidebarWidget(labelText, contentSelector, key) {
     if (widget) {
       clearInterval(poll);
       sidebarPollTimers = sidebarPollTimers.filter((timer) => timer !== poll);
-      console.log(`[LFR] Sidebar widget "${labelText}" found (after poll).`);
       applySidebarWidget(widget, key);
     }
   }, 500);
@@ -457,12 +451,10 @@ function applySidebarWidget(widget, key) {
       applyWidgetStyle(card, key);
       return;
     }
-    console.log(`[LFR] Hiding sidebar widget: ${key}`);
     card.dataset.lfrHidden = key;
     applyWidgetStyle(card, key);
   } else {
     if (card.dataset.lfrHidden !== key) return;
-    console.log(`[LFR] Showing sidebar widget: ${key}`);
     clearWidgetStyle(card);
   }
 }
@@ -593,9 +585,6 @@ function hasSidebarCardLabel(card, predicate) {
 }
 
 function applySidebarFilteredCard(card, key) {
-  if (card.dataset.lfrHidden !== key) {
-    console.log(`[LFR] Filtering sidebar ${key} card:`, card);
-  }
   card.dataset.lfrHidden = key;
   applyWidgetStyle(card, key);
 }
@@ -606,9 +595,6 @@ function getMatchingSidebarPhrase(card, phrases) {
 }
 
 function applySidebarPhraseWidget(card) {
-  if (!card.querySelector(`[${PHRASE_HIGHLIGHT_ATTR}="sidebar"]`)) {
-    console.log(`[LFR] Filtering sidebar phrase: ${card.dataset.lfrPhrase}`);
-  }
   highlightPhrases(card, normalizePhraseList(currentSettings.hideSidebarPhrases), 'sidebar');
   card.dataset.lfrHidden = 'phrase';
   applyWidgetStyle(card, 'phrase');
@@ -811,9 +797,6 @@ function getFeedPhraseRoot() {
 }
 
 function applyFeedPhrasePost(card, phrases) {
-  if (!card.querySelector(`[${PHRASE_HIGHLIGHT_ATTR}="feed"]`)) {
-    console.log(`[LFR] Filtering feed phrase: ${card.dataset.lfrPhrase}`);
-  }
   highlightPhrases(card, phrases, 'feed');
   if (isPostFilteredByNonPhrase(card)) return;
   applyPostStyle(card, 'phrase');
@@ -1071,7 +1054,6 @@ function applyHiddenPost(post, type) {
     applyPostStyle(post, type);
     return;
   }
-  console.log(`[LFR] Filtering ${type} post:`, post);
   applyPostStyle(post, type);
 }
 
