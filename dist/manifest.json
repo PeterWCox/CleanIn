@@ -6,6 +6,7 @@
   "description": "Hide suggested, promoted, and promoted-by posts on your LinkedIn feed.",
   "permissions": [
     "sidePanel",
+    "scripting",
     "storage"
   ],
   "host_permissions": [

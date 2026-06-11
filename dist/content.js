@@ -1079,7 +1079,12 @@ function applyHiddenPost(post, type) {
 // Message listener — receives SETTINGS_UPDATED from background
 // ---------------------------------------------------------------------------
 
-chrome.runtime.onMessage.addListener((message) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message.type === 'PING') {
+    sendResponse({ ok: true });
+    return;
+  }
+
   if (message.type === 'SETTINGS_UPDATED') {
     currentSettings = normalizeSettings(message.settings);
     animateFilteredHides = true;
