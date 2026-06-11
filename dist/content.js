@@ -14,6 +14,8 @@ let currentSettings = { ...defaultSettings };
 let feedObserver = null;
 let feedInterval = null;
 let applyDebounceTimer = null;
+let wakeApplyTimers = [];
+let lastWakeApplyAt = 0;
 let phraseHighlightSignature = null;
 let animateFilteredHides = false;
 
@@ -96,10 +98,38 @@ function scheduleApply() {
   if (applyDebounceTimer) return;
   applyDebounceTimer = setTimeout(() => {
     applyDebounceTimer = null;
-    applyFeedFilters();
-    applySidebarWidgets();
-    applyStatusMenuPencilIcons();
+    applyAllFilters();
   }, 150);
+}
+
+function applyAllFilters() {
+  applyFeedFilters();
+  applySidebarWidgets();
+  applyStatusMenuPencilIcons();
+}
+
+function scheduleWakeApply() {
+  wakeApplyTimers.forEach(clearTimeout);
+  wakeApplyTimers = [];
+
+  const now = Date.now();
+  if (now - lastWakeApplyAt > 500) {
+    lastWakeApplyAt = now;
+    applyAllFilters();
+  }
+
+  // LinkedIn often hydrates/recycles feed cards after a hidden tab becomes
+  // visible again, so run a short burst after wake instead of waiting for
+  // throttled background timers to catch up.
+  wakeApplyTimers = [250, 1000, 3000, 8000].map((ms) => setTimeout(applyAllFilters, ms));
+}
+
+function setupLifecycleListeners() {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') scheduleWakeApply();
+  });
+  window.addEventListener('focus', scheduleWakeApply);
+  window.addEventListener('pageshow', scheduleWakeApply);
 }
 
 function applySidebarWidgets() {
@@ -226,9 +256,7 @@ function attachFeedObserver() {
 
   // Safety-net interval: catches anything the observer debounce misses.
   feedInterval = setInterval(() => {
-    applyFeedFilters();
-    applySidebarWidgets();
-    applyStatusMenuPencilIcons();
+    applyAllFilters();
   }, 2000);
 
   // Apply a few times shortly after attach to handle posts that render
@@ -622,7 +650,7 @@ function applyFeedPhraseFilters(phrases) {
   const cardsToFilter = new Set();
 
   if (phrases.length) {
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    const walker = document.createTreeWalker(getFeedPhraseRoot(), NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
         if (!getMatchingPhrase(node.nodeValue, phrases)) return NodeFilter.FILTER_REJECT;
         if (shouldIgnorePhraseTextNode(node)) return NodeFilter.FILTER_REJECT;
@@ -651,6 +679,10 @@ function applyFeedPhraseFilters(phrases) {
   [...document.querySelectorAll('[data-lfr-hidden="phrase"][data-lfr-phrase-scope="feed"]')].forEach((post) => {
     if (!activeCards.has(post)) clearPostStyle(post);
   });
+}
+
+function getFeedPhraseRoot() {
+  return getFeed() || document.querySelector('main, [role="main"]') || document.body;
 }
 
 function applyFeedPhrasePost(card, phrases) {
@@ -924,8 +956,7 @@ chrome.runtime.onMessage.addListener((message) => {
   if (message.type === 'SETTINGS_UPDATED') {
     currentSettings = normalizeSettings(message.settings);
     animateFilteredHides = true;
-    applyFeedFilters();
-    applySidebarWidgets();
+    applyAllFilters();
     animateFilteredHides = false;
   }
 });
@@ -936,3 +967,4 @@ chrome.runtime.onMessage.addListener((message) => {
 
 init();
 setupNavigationListener();
+setupLifecycleListeners();
