@@ -1,20 +1,61 @@
 globalThis.CleanInFeatures = globalThis.CleanInFeatures || {};
 
 globalThis.CleanInFeatures.scanHighlights = globalThis.CleanInFeatures.scanHighlights || (() => {
-  const SCANNING_ATTR = 'data-lfr-scanning';
   let scannedPosts = new WeakSet();
   let clearTimer = null;
+
+  const BADGE_ID = 'cleanin-scanning-badge';
 
   function ensureStyles() {
     if (document.getElementById('cleanin-scan-styles')) return;
     const style = document.createElement('style');
     style.id = 'cleanin-scan-styles';
-    style.textContent = `[${SCANNING_ATTR}] {
-      outline: 2px solid rgba(245, 184, 46, 0.75) !important;
-      background-color: rgba(245, 184, 46, 0.16) !important;
-      transition: outline-color 120ms ease, background-color 120ms ease;
-    }`;
+    style.textContent = `
+      #${BADGE_ID} {
+        position: fixed !important;
+        top: 12px !important;
+        right: 12px !important;
+        z-index: 2147483647 !important;
+        background: rgba(245, 184, 46, 0.92) !important;
+        color: #1a1a1a !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        letter-spacing: 1.2px !important;
+        padding: 5px 12px !important;
+        border-radius: 4px !important;
+        pointer-events: none !important;
+        opacity: 0 !important;
+        transform: translateY(-4px) !important;
+        transition: opacity 180ms ease, transform 180ms ease !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;
+      }
+      #${BADGE_ID}.visible {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+      }
+    `;
     document.head?.append(style);
+  }
+
+  function getBadge() {
+    let badge = document.getElementById(BADGE_ID);
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.id = BADGE_ID;
+      badge.textContent = 'SCANNING';
+      document.body?.append(badge);
+    }
+    return badge;
+  }
+
+  function showBadge() {
+    getBadge().classList.add('visible');
+  }
+
+  function hideBadge() {
+    const badge = document.getElementById(BADGE_ID);
+    if (badge) badge.classList.remove('visible');
   }
 
   function markNew(posts, enabled) {
@@ -23,23 +64,23 @@ globalThis.CleanInFeatures.scanHighlights = globalThis.CleanInFeatures.scanHighl
     posts.forEach((post) => {
       if (scannedPosts.has(post)) return;
       scannedPosts.add(post);
-      post.dataset.lfrScanning = 'true';
       hasNewPosts = true;
     });
     if (!hasNewPosts) return;
+    showBadge();
     if (clearTimer) clearTimeout(clearTimer);
-    clearTimer = setTimeout(clear, 450);
+    clearTimer = setTimeout(hide, 450);
   }
 
-  function clear() {
+  function hide() {
     clearTimer = null;
-    document.querySelectorAll(`[${SCANNING_ATTR}]`).forEach((post) => delete post.dataset.lfrScanning);
+    hideBadge();
   }
 
   function stop() {
     if (clearTimer) clearTimeout(clearTimer);
     clearTimer = null;
-    clear();
+    hideBadge();
   }
 
   function reset() {
