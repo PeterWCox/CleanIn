@@ -69,14 +69,9 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
     post.dataset.lfrHidden = type;
     if (settings.transparentMode) {
       const colors = FILTER_STYLES[type] || FILTER_STYLES.promoted;
-      const shouldAnimate = animateFilteredHides && (post.style.display === 'none' || post.style.opacity !== '0.4');
+      clearAnimationStyles(post);
       post.style.display = 'block';
-      post.style.transition = shouldAnimate ? `opacity ${FADE_DURATION}ms ease` : '';
-      post.style.opacity = shouldAnimate ? '0' : '0.4';
-      if (shouldAnimate) {
-        requestAnimationFrame(() => { post.style.opacity = '0.4'; });
-        setTimeout(() => clearAnimationStyles(post), FADE_DURATION + 20);
-      }
+      post.style.opacity = '0.4';
       post.style.visibility = '';
       post.style.outline = colors[0];
       post.style.backgroundColor = colors[1];
