@@ -75,6 +75,12 @@ globalThis.CleanInFeatures.hideSidebar = globalThis.CleanInFeatures.hideSidebar 
     return rect.width > 0 && rect.width <= MAX_WIDTH && rect.height > 0 && rect.height <= MAX_HEIGHT;
   }
 
+  function isVisibleElement(element) {
+    if (!element || !(element instanceof Element)) return false;
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  }
+
   function applyWidget(widget, key, settings) {
     const card = cardContainer(widget);
     const shouldHide = (key === 'news' && settings.hideLinkedInNews) || (key === 'puzzles' && settings.hidePuzzles) || (key === 'ad' && settings.hideSidebarAds);
