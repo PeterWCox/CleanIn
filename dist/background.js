@@ -116,4 +116,5 @@ const defaultSettings = {
   hidePuzzles: true,
   hideSidebarAds: true,
   transparentMode: false,
+  showScanHighlights: true,
 };

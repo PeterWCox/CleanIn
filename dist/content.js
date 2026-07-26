@@ -11,6 +11,7 @@ const defaultSettings = {
   hidePuzzles: true,
   hideSidebarAds: true,
   transparentMode: false,
+  showScanHighlights: true,
 };
 
 let currentSettings = { ...defaultSettings };
@@ -25,7 +26,7 @@ let lastWakeApplyAt = 0;
 let lastRouteKey = getRouteKey();
 let animateFilteredHides = false;
 let scanClearTimer = null;
-const scannedPosts = new WeakSet();
+let scannedPosts = new WeakSet();
 
 const FILTER_STYLES = {
   suggested: {
@@ -663,7 +664,7 @@ function applyFeedFilters() {
   let hasNewPosts = false;
 
   posts.forEach((post) => {
-    if (!scannedPosts.has(post)) {
+    if (currentSettings.showScanHighlights && !scannedPosts.has(post)) {
       scannedPosts.add(post);
       post.dataset.lfrScanning = 'true';
       hasNewPosts = true;
@@ -870,7 +871,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message.type === 'SETTINGS_UPDATED') {
+    const wasShowingScanHighlights = currentSettings.showScanHighlights;
     currentSettings = normalizeSettings(message.settings);
+    if (!currentSettings.showScanHighlights) clearScanHighlights();
+    if (currentSettings.showScanHighlights && !wasShowingScanHighlights) scannedPosts = new WeakSet();
     animateFilteredHides = true;
     applyAllFilters();
     animateFilteredHides = false;
