@@ -348,7 +348,16 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 // Start
 // ---------------------------------------------------------------------------
 
-init();
-setupNavigationListener();
-setupLifecycleListeners();
+function startWhenFeaturesReady() {
+  if (!globalThis.CleanInFeatures?.hideFeed || !globalThis.CleanInFeatures?.hideSidebar || !globalThis.CleanInFeatures?.scanHighlights) {
+    setTimeout(startWhenFeaturesReady, 0);
+    return;
+  }
+
+  init();
+  setupNavigationListener();
+  setupLifecycleListeners();
+}
+
+startWhenFeaturesReady();
 }
