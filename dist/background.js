@@ -73,7 +73,10 @@ function ensureContentScriptOnTab(tabId, tab = null) {
   chrome.tabs.sendMessage(tabId, { type: "PING" }, () => {
     if (!chrome.runtime.lastError) return;
 
-    chrome.scripting.executeScript({ target: { tabId }, files: ["content.js"] }).catch(() => {
+    chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["features/hideFeed.js", "features/hideSidebar.js", "features/scanHighlights.js", "content.js"],
+    }).catch(() => {
       // The tab may be gone, still loading, or outside the extension's host permissions.
     });
   });
