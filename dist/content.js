@@ -24,6 +24,8 @@ let sidebarPollTimers = [];
 let lastWakeApplyAt = 0;
 let lastRouteKey = getRouteKey();
 let animateFilteredHides = false;
+let scanClearTimer = null;
+const scannedPosts = new WeakSet();
 
 const FILTER_STYLES = {
   suggested: {
@@ -59,6 +61,7 @@ const FEED_PATH_PATTERN = /^\/feed(?:\/|$)/;
 const SIDEBAR_WIDGET_MAX_WIDTH = 420;
 const SIDEBAR_WIDGET_MAX_HEIGHT = 900;
 const STATUS_MENU_ICON_ATTR = 'data-lfr-status-icon';
+const SCANNING_ATTR = 'data-lfr-scanning';
 const PENCIL_ICON_PATH =
   'M13.62 3.38a2.12 2.12 0 0 0-3 0L3 11v3h3l7.62-7.62a2.12 2.12 0 0 0 0-3M5.17 12H5v-.17l5.04-5.04.17.17zm6.45-6.45-.17.17-.17-.17.17-.17a.12.12 0 0 1 .17.17';
 
@@ -190,6 +193,7 @@ function init() {
     return;
   }
 
+  ensureScanStyles();
   loadSettings().then((settings) => {
     if (!isLinkedInFeedPage()) return;
     currentSettings = settings;
@@ -247,17 +251,41 @@ function teardownFiltering() {
     clearTimeout(applyDebounceTimer);
     applyDebounceTimer = null;
   }
+  if (scanClearTimer) {
+    clearTimeout(scanClearTimer);
+    scanClearTimer = null;
+  }
   wakeApplyTimers.forEach(clearTimeout);
   wakeApplyTimers = [];
   sidebarPollTimers.forEach(clearInterval);
   sidebarPollTimers = [];
   clearFilteredPageStyles();
+  clearScanHighlights();
 }
 
 function clearFilteredPageStyles() {
   document.querySelectorAll('[data-lfr-hidden]').forEach((element) => {
     delete element.dataset.lfrHidden;
     clearFilteredElementStyle(element);
+  });
+}
+
+function ensureScanStyles() {
+  if (document.getElementById('cleanin-scan-styles')) return;
+
+  const style = document.createElement('style');
+  style.id = 'cleanin-scan-styles';
+  style.textContent = `[${SCANNING_ATTR}] {
+    outline: 2px solid rgba(245, 184, 46, 0.75) !important;
+    background-color: rgba(245, 184, 46, 0.16) !important;
+    transition: outline-color 120ms ease, background-color 120ms ease;
+  }`;
+  document.head?.append(style);
+}
+
+function clearScanHighlights() {
+  document.querySelectorAll(`[${SCANNING_ATTR}]`).forEach((post) => {
+    delete post.dataset.lfrScanning;
   });
 }
 
@@ -632,8 +660,15 @@ function clearWidgetStyle(element) {
 
 function applyFeedFilters() {
   const posts = getFeedPosts();
+  let hasNewPosts = false;
 
   posts.forEach((post) => {
+    if (!scannedPosts.has(post)) {
+      scannedPosts.add(post);
+      post.dataset.lfrScanning = 'true';
+      hasNewPosts = true;
+    }
+
     const filterKey = getPostFilterKey(post);
     if (!filterKey) {
       if (POST_FILTER_KEYS.has(post.dataset.lfrHidden)) clearPostStyle(post);
@@ -653,6 +688,17 @@ function applyFeedFilters() {
     if (post.dataset.lfrHidden === filterKey) clearPostStyle(post);
   });
 
+  if (hasNewPosts) scheduleScanHighlightClear();
+}
+
+function scheduleScanHighlightClear() {
+  if (scanClearTimer) clearTimeout(scanClearTimer);
+  scanClearTimer = setTimeout(() => {
+    scanClearTimer = null;
+    document.querySelectorAll(`[${SCANNING_ATTR}]`).forEach((post) => {
+      delete post.dataset.lfrScanning;
+    });
+  }, 450);
 }
 
 function applyStatusMenuPencilIcons() {
