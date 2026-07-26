@@ -9,9 +9,7 @@ CleanIn is a simple chrome extension that hides slop content such as:
 
 1. Suggested posts
 2. Promoted and Promoted By posts
-3. Posts containing phrases you choose
-4. Sidebar junk like News and Puzzles
-5. Posts containing certain phrases (e.g. B2B marketing, Open to Work)
+3. Sidebar junk like News and Puzzles
 
 You can toggle on/off this hiding behaviour by clicking the extensions icon. 
 
@@ -25,7 +23,7 @@ The side panel is the extension’s settings UI. Users turn filters on or off an
 
 ## storage justification
 
-Settings (which categories to hide, custom phrase filters, and display preferences) are saved with `chrome.storage.sync` so choices persist across sessions and devices signed into the same Chrome profile. No LinkedIn credentials or personal profile data are stored—only the extension’s own boolean/options keys and user-entered phrase filter list.
+Settings (which categories to hide and display preferences) are saved with `chrome.storage.sync` so choices persist across sessions and devices signed into the same Chrome profile. No LinkedIn credentials or personal profile data are stored—only the extension’s own boolean/options keys.
 
 ---
 
@@ -41,7 +39,7 @@ If you **remove** `activeTab` from the uploaded extension, that field may disapp
 
 ## Host permission justification
 
-Host access is limited to `https://www.linkedin.com/` and `https://www.linkedin.com/feed` (and feed path variants). That is where the content script runs so it can observe the LinkedIn home/feed experience and hide or highlight matching UI nodes according to saved settings, including user-entered phrase filters. The extension does not request broad `<all_urls>` access; it only targets the specific LinkedIn URLs needed for this single purpose.
+Host access is limited to `https://www.linkedin.com/` and `https://www.linkedin.com/feed` (and feed path variants). That is where the content script runs so it can observe the LinkedIn home/feed experience and hide matching UI nodes according to saved settings. The extension does not request broad `<all_urls>` access; it only targets the specific LinkedIn URLs needed for this single purpose.
 
 ---
 

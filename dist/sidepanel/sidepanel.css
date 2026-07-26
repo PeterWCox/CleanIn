@@ -99,58 +99,6 @@ main {
   overflow: hidden;
 }
 
-.mui-tabs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-  border: 1px solid var(--divider);
-  border-radius: var(--radius);
-  padding: 4px;
-  background: #e4eaf0;
-  box-shadow: none;
-}
-
-.mui-tab {
-  position: relative;
-  min-height: 38px;
-  border: 0;
-  border-radius: 6px;
-  color: var(--text-secondary);
-  background: transparent;
-  font: inherit;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.mui-tab:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.56);
-}
-
-.mui-tab.active {
-  color: #fff;
-  background: var(--linkedin-blue-dark);
-  box-shadow: var(--shadow-1);
-}
-
-.mui-tab.active::after {
-  content: none;
-}
-
-.mui-tab:focus-visible {
-  outline: 2px solid var(--linkedin-blue);
-  outline-offset: 2px;
-}
-
-.tab-panel.hidden {
-  display: none;
-}
-
-.field-description {
-  color: var(--text-secondary);
-  font-size: 12px;
-}
-
 .setting-list {
   display: flex;
   flex-direction: column;
@@ -206,49 +154,9 @@ main {
   min-width: 0;
 }
 
-.toggle-title,
-.field-title {
+.toggle-title {
   color: var(--text-primary);
   font-weight: 850;
-}
-
-.field-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.field-row {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px;
-  border-top: 1px solid var(--divider);
-  background: var(--surface-subtle);
-}
-
-textarea {
-  width: 100%;
-  min-height: 116px;
-  resize: vertical;
-  border: 1px solid #b7c6d8;
-  border-radius: var(--radius);
-  padding: 10px 12px;
-  color: var(--text-primary);
-  background: #fff;
-  font: inherit;
-  line-height: 1.45;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-textarea::placeholder {
-  color: #8b98a7;
-}
-
-textarea:focus-visible {
-  outline: none;
-  border-color: var(--linkedin-blue);
-  box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.18);
 }
 
 .toggle-switch {

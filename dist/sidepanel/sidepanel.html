@@ -16,16 +16,7 @@
       </div>
     </header>
 
-    <nav class="mui-paper mui-tabs" aria-label="Settings sections">
-      <button class="mui-tab active" id="general-tab" type="button" role="tab" aria-selected="true" aria-controls="general-panel" data-tab-target="general-panel">
-        General
-      </button>
-      <button class="mui-tab" id="advanced-tab" type="button" role="tab" aria-selected="false" aria-controls="advanced-panel" data-tab-target="advanced-panel">
-        Advanced
-      </button>
-    </nav>
-
-    <section class="mui-paper tab-panel" id="general-panel" role="tabpanel" aria-labelledby="general-tab">
+    <section class="mui-paper" id="general-panel">
       <div class="setting-list">
         <label class="toggle-row" for="toggle-suggested">
           <span class="setting-icon setting-icon-emoji" aria-hidden="true">
@@ -93,33 +84,21 @@
             <span class="slider"></span>
           </span>
         </label>
+
+        <label class="toggle-row" for="toggle-transparent-mode">
+          <span class="setting-icon setting-icon-emoji" aria-hidden="true">
+            👁️
+          </span>
+          <span class="toggle-label">
+            <span class="toggle-title">Show hidden content as transparent</span>
+          </span>
+          <span class="toggle-switch">
+            <input type="checkbox" id="toggle-transparent-mode" />
+            <span class="slider"></span>
+          </span>
+        </label>
       </div>
 
-    </section>
-
-    <section class="mui-paper tab-panel hidden" id="advanced-panel" role="tabpanel" aria-labelledby="advanced-tab">
-      <label class="toggle-row" for="toggle-transparent-mode">
-        <span class="setting-icon setting-icon-emoji" aria-hidden="true">
-          👁️
-        </span>
-        <span class="toggle-label">
-          <span class="toggle-title">Show hidden content as transparent</span>
-        </span>
-        <span class="toggle-switch">
-          <input type="checkbox" id="toggle-transparent-mode" />
-          <span class="slider"></span>
-        </span>
-      </label>
-
-      <label class="field-row" for="sidebar-phrases">
-        <span class="field-title">
-          <span class="setting-icon setting-icon-emoji" aria-hidden="true">
-            🔤
-          </span>
-          Hide posts containing these phrases
-        </span>
-        <textarea id="sidebar-phrases" rows="5" spellcheck="false" placeholder="People you may know&#10;Suggested for you"></textarea>
-      </label>
     </section>
 
     <footer class="panel-footer">

@@ -4,10 +4,6 @@ const toggleLinkedInNews = document.getElementById('toggle-linkedin-news');
 const togglePuzzles = document.getElementById('toggle-puzzles');
 const toggleSidebarAds = document.getElementById('toggle-sidebar-ads');
 const toggleTransparentMode = document.getElementById('toggle-transparent-mode');
-const sidebarPhrases = document.getElementById('sidebar-phrases');
-const tabButtons = document.querySelectorAll('.mui-tab');
-const tabPanels = document.querySelectorAll('.tab-panel');
-const PHRASE_INPUT_DEBOUNCE_MS = 600;
 
 const defaultSettings = {
   hideSuggested: true,
@@ -16,12 +12,10 @@ const defaultSettings = {
   hideLinkedInNews: true,
   hidePuzzles: true,
   hideSidebarAds: true,
-  hideSidebarPhrases: [],
   transparentMode: false,
 };
 
 let transparentMode = defaultSettings.transparentMode;
-let phraseInputTimer = null;
 
 // ---------------------------------------------------------------------------
 // Load persisted settings and reflect them in the UI
@@ -33,7 +27,6 @@ chrome.storage.sync.get(defaultSettings, (settings) => {
   toggleLinkedInNews.checked = settings.hideLinkedInNews;
   togglePuzzles.checked = settings.hidePuzzles;
   toggleSidebarAds.checked = settings.hideSidebarAds;
-  sidebarPhrases.value = normalizePhraseList(settings.hideSidebarPhrases).join('\n');
   transparentMode = settings.transparentMode;
   toggleTransparentMode.checked = transparentMode;
 });
@@ -43,8 +36,6 @@ chrome.storage.sync.get(defaultSettings, (settings) => {
 // ---------------------------------------------------------------------------
 
 function onToggleChange() {
-  clearTimeout(phraseInputTimer);
-
   const settings = {
     hideSuggested: toggleSuggested.checked,
     hidePromoted: togglePromoted.checked,
@@ -52,25 +43,10 @@ function onToggleChange() {
     hideLinkedInNews: toggleLinkedInNews.checked,
     hidePuzzles: togglePuzzles.checked,
     hideSidebarAds: toggleSidebarAds.checked,
-    hideSidebarPhrases: getSidebarPhrases(),
     transparentMode,
   };
 
   chrome.runtime.sendMessage({ type: 'UPDATE_SETTINGS', settings });
-}
-
-function onPhraseInput() {
-  clearTimeout(phraseInputTimer);
-  phraseInputTimer = setTimeout(onToggleChange, PHRASE_INPUT_DEBOUNCE_MS);
-}
-
-function getSidebarPhrases() {
-  return normalizePhraseList(sidebarPhrases.value.split('\n'));
-}
-
-function normalizePhraseList(value) {
-  if (!Array.isArray(value)) return [];
-  return [...new Set(value.map((phrase) => String(phrase).trim()).filter(Boolean))];
 }
 
 toggleSuggested.addEventListener('change', onToggleChange);
@@ -78,24 +54,7 @@ togglePromoted.addEventListener('change', onToggleChange);
 toggleLinkedInNews.addEventListener('change', onToggleChange);
 togglePuzzles.addEventListener('change', onToggleChange);
 toggleSidebarAds.addEventListener('change', onToggleChange);
-sidebarPhrases.addEventListener('input', onPhraseInput);
 toggleTransparentMode.addEventListener('change', () => {
   transparentMode = toggleTransparentMode.checked;
   onToggleChange();
-});
-
-tabButtons.forEach((button) => {
-  button.addEventListener('click', () => {
-    const targetPanelId = button.dataset.tabTarget;
-
-    tabButtons.forEach((tabButton) => {
-      const isActive = tabButton === button;
-      tabButton.classList.toggle('active', isActive);
-      tabButton.setAttribute('aria-selected', String(isActive));
-    });
-
-    tabPanels.forEach((panel) => {
-      panel.classList.toggle('hidden', panel.id !== targetPanelId);
-    });
-  });
 });

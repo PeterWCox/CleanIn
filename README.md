@@ -4,10 +4,9 @@ CleanIn is a simple Chrome extension that hides unwanted feed content masqueradi
 
 1. Suggested posts
 2. Promoted and Promoted by posts
-3. Feed or sidebar cards matching custom phrases
-4. Sidebar content like News and Puzzles
+3. Sidebar content like News and Puzzles
 
-They are hidden by default, but you can show them as transparent in the side panel if you prefer (dimmed on the page instead of removed). Custom phrase matches are highlighted in yellow when transparent mode is enabled, and removed entirely when hidden mode is enabled.
+They are hidden by default, but you can show them as transparent in the General settings if you prefer (dimmed on the page instead of removed).
 
 ![CleanIn demo](screenshots/cleanin-demo.png)
 

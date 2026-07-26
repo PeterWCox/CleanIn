@@ -8,6 +8,7 @@ chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 
 chrome.runtime.onInstalled.addListener(ensureContentScriptsOnLinkedInTabs);
 chrome.runtime.onStartup.addListener(ensureContentScriptsOnLinkedInTabs);
+chrome.runtime.onInstalled.addListener(() => chrome.storage.sync.remove('hideSidebarPhrases'));
 
 chrome.tabs.onActivated.addListener(({ tabId }) => {
   ensureContentScriptOnTab(tabId);
@@ -114,6 +115,5 @@ const defaultSettings = {
   hideLinkedInNews: true,
   hidePuzzles: true,
   hideSidebarAds: true,
-  hideSidebarPhrases: [],
   transparentMode: false,
 };
