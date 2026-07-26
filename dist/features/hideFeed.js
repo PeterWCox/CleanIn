@@ -93,10 +93,16 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
       return;
     }
 
-    post.style.transition = `opacity ${FADE_DURATION}ms ease`;
+    const height = post.getBoundingClientRect().height;
+    post.style.overflow = 'hidden';
+    post.style.height = `${height}px`;
+    post.style.transition = `height ${FADE_DURATION}ms ease, opacity ${FADE_DURATION}ms ease`;
     post.style.opacity = post.style.opacity || '1';
     post.style.pointerEvents = 'none';
-    requestAnimationFrame(() => { post.style.opacity = '0'; });
+    requestAnimationFrame(() => {
+      post.style.height = '0px';
+      post.style.opacity = '0';
+    });
     setTimeout(() => {
       if (!settings.transparentMode && post.dataset.lfrHidden) post.style.display = 'none';
     }, FADE_DURATION + 20);
@@ -110,9 +116,16 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
     }
 
     post.style.display = '';
-    post.style.transition = `opacity ${FADE_DURATION}ms ease`;
+    post.style.overflow = 'hidden';
+    post.style.height = '';
+    const height = post.scrollHeight;
+    post.style.height = '0px';
+    post.style.transition = `height ${FADE_DURATION}ms ease, opacity ${FADE_DURATION}ms ease`;
     post.style.opacity = '0';
-    requestAnimationFrame(() => { post.style.opacity = '1'; });
+    requestAnimationFrame(() => {
+      post.style.height = `${height}px`;
+      post.style.opacity = '1';
+    });
     setTimeout(() => {
       if (!post.dataset.lfrHidden) clearAnimationStyles(post);
     }, FADE_DURATION + 20);
@@ -121,12 +134,16 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   function clearAnimationStyles(element) {
     element.style.transition = '';
     element.style.opacity = '';
+    element.style.height = '';
+    element.style.overflow = '';
   }
 
   function clearStyles(element) {
     element.style.display = '';
     element.style.transition = '';
     element.style.opacity = '';
+    element.style.height = '';
+    element.style.overflow = '';
     element.style.visibility = '';
     element.style.outline = '';
     element.style.backgroundColor = '';
