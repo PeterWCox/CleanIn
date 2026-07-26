@@ -7,6 +7,7 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
     'promoted-by': ['2px solid rgba(128, 0, 255, 0.4)', 'rgba(128, 0, 255, 0.06)'],
   };
   const FILTER_KEYS = new Set(['suggested', 'promoted', 'promoted-by']);
+  const FADE_DURATION = 220;
 
   function getFeed() {
     return document.querySelector('[data-component-type="LazyColumn"]');
@@ -18,13 +19,13 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
     posts.forEach((post) => {
       const filterKey = getFilterKey(post);
       if (!filterKey) {
-        if (FILTER_KEYS.has(post.dataset.lfrHidden)) clearPostStyle(post);
+        if (FILTER_KEYS.has(post.dataset.lfrHidden)) clearPostStyle(post, animateFilteredHides);
         return;
       }
 
       const shouldHide = (filterKey === 'suggested' && settings.hideSuggested) || (filterKey === 'promoted' && settings.hidePromoted) || (filterKey === 'promoted-by' && settings.hidePromotedBy);
       if (shouldHide) applyHiddenPost(post, filterKey, settings, animateFilteredHides);
-      else if (post.dataset.lfrHidden === filterKey) clearPostStyle(post);
+      else if (post.dataset.lfrHidden === filterKey) clearPostStyle(post, animateFilteredHides);
     });
   }
 
@@ -68,9 +69,14 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
     post.dataset.lfrHidden = type;
     if (settings.transparentMode) {
       const colors = FILTER_STYLES[type] || FILTER_STYLES.promoted;
+      const shouldAnimate = animateFilteredHides && (post.style.display === 'none' || post.style.opacity !== '0.4');
       post.style.display = 'block';
-      post.style.transition = '';
-      post.style.opacity = '0.4';
+      post.style.transition = shouldAnimate ? `opacity ${FADE_DURATION}ms ease` : '';
+      post.style.opacity = shouldAnimate ? '0' : '0.4';
+      if (shouldAnimate) {
+        requestAnimationFrame(() => { post.style.opacity = '0.4'; });
+        setTimeout(() => clearAnimationStyles(post), FADE_DURATION + 20);
+      }
       post.style.visibility = '';
       post.style.outline = colors[0];
       post.style.backgroundColor = colors[1];
@@ -87,18 +93,34 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
       return;
     }
 
-    post.style.transition = 'opacity 220ms ease';
+    post.style.transition = `opacity ${FADE_DURATION}ms ease`;
     post.style.opacity = post.style.opacity || '1';
     post.style.pointerEvents = 'none';
     requestAnimationFrame(() => { post.style.opacity = '0'; });
     setTimeout(() => {
       if (!settings.transparentMode && post.dataset.lfrHidden) post.style.display = 'none';
-    }, 240);
+    }, FADE_DURATION + 20);
   }
 
-  function clearPostStyle(post) {
+  function clearPostStyle(post, animate) {
     delete post.dataset.lfrHidden;
-    clearStyles(post);
+    if (!animate) {
+      clearStyles(post);
+      return;
+    }
+
+    post.style.display = '';
+    post.style.transition = `opacity ${FADE_DURATION}ms ease`;
+    post.style.opacity = '0';
+    requestAnimationFrame(() => { post.style.opacity = '1'; });
+    setTimeout(() => {
+      if (!post.dataset.lfrHidden) clearAnimationStyles(post);
+    }, FADE_DURATION + 20);
+  }
+
+  function clearAnimationStyles(element) {
+    element.style.transition = '';
+    element.style.opacity = '';
   }
 
   function clearStyles(element) {
