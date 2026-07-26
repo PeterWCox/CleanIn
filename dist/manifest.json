@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "CleanIn - Hide LinkedIn promoted and suggested posts",
   "short_name": "CleanIn",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Hide suggested, promoted, and promoted-by posts on your LinkedIn feed.",
   "permissions": [
     "sidePanel",

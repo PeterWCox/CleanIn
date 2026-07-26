@@ -36,10 +36,7 @@ stages:
               fi
 
               echo "Validated release branch: ${branch}"
-              echo "##vso[task.setvariable variable=ReleaseBranchRef;isOutput=true]${BUILD_SOURCEBRANCH}"
-              echo "##vso[task.setvariable variable=ReleaseBranchName;isOutput=true]${branch}"
             displayName: Validate release branch version
-            name: ValidateReleaseBranch
 
           - script: |
               python3 -m json.tool dist/manifest.json >/dev/null
@@ -50,55 +47,9 @@ stages:
             displayName: Validate extension files
 
           - script: |
-              cd dist
-              zip -r "$(Build.ArtifactStagingDirectory)/dist.zip" . -x "*.DS_Store" "__MACOSX/*"
-            displayName: Create dist ZIP
-
-          - task: PublishPipelineArtifact@1
-            displayName: Publish QA dist ZIP
-            inputs:
-              targetPath: $(Build.ArtifactStagingDirectory)/dist.zip
-              artifact: dist.zip
-              publishLocation: pipeline
-
-  - stage: QA
-    displayName: QA (Manual)
-    dependsOn: BuildDist
-    jobs:
-      - job: ManualQATest
-        displayName: Manual QA test dist.zip
-        pool: server
-        timeoutInMinutes: 4320
-        steps:
-          - task: ManualValidation@0
-            displayName: Confirm local dist.zip QA test
-            timeoutInMinutes: 4320
-            inputs:
-              notifyUsers: ''
-              instructions: |
-                Download the dist.zip artifact from this run.
-                Unzip it, then in Chrome open chrome://extensions, enable Developer mode, click Load unpacked, and select the unzipped dist folder.
-                Test LinkedIn with the CleanIn extension enabled, including transparent and hidden modes, before resuming this stage.
-              onTimeout: reject
-
-  - stage: Deployment
-    displayName: Deployment
-    dependsOn: QA
-    jobs:
-      - job: BuildStoreZip
-        displayName: Package production ZIP
-        pool:
-          vmImage: ubuntu-latest
-        steps:
-          - task: DownloadPipelineArtifact@2
-            displayName: Download QA dist ZIP
-            inputs:
-              artifact: dist.zip
-              path: $(Pipeline.Workspace)/qa-dist
-
-          - script: |
               version="$(node -e "console.log(JSON.parse(require('fs').readFileSync('dist/manifest.json', 'utf8')).version)")"
-              cp "$(Pipeline.Workspace)/qa-dist/dist.zip" "$(Build.ArtifactStagingDirectory)/cleanin-chrome-store-v${version}.zip"
+              cd dist
+              zip -r "$(Build.ArtifactStagingDirectory)/cleanin-chrome-store-v${version}.zip" . -x "*.DS_Store" "__MACOSX/*"
             displayName: Create Chrome Web Store ZIP
 
           - task: PublishPipelineArtifact@1
@@ -108,9 +59,12 @@ stages:
               artifact: chrome-store-zip
               publishLocation: pipeline
 
-      - job: UploadToChromeStore
+  - stage: UploadToChromeStore
+    displayName: Upload to Chrome Store
+    dependsOn: BuildDist
+    jobs:
+      - job: ManualUpload
         displayName: Upload to Chrome Store
-        dependsOn: BuildStoreZip
         pool: server
         timeoutInMinutes: 4320
         steps:
@@ -124,140 +78,3 @@ stages:
                 Upload the cleanin-chrome-store-v*.zip package to the Chrome Developer Store.
                 Resume this job after the package has been uploaded successfully.
               onTimeout: reject
-
-      - job: ApproveProdSmokeTest
-        displayName: Approve production smoke test
-        dependsOn: UploadToChromeStore
-        pool: server
-        timeoutInMinutes: 4320
-        steps:
-          - task: ManualValidation@0
-            displayName: Approve production smoke test
-            timeoutInMinutes: 4320
-            inputs:
-              notifyUsers: ''
-              instructions: |
-                After the Chrome Web Store release is live, install or update CleanIn from the public listing.
-                Test LinkedIn with the production extension enabled, including transparent and hidden modes, before completing this job.
-              onTimeout: reject
-
-  - stage: CreateMergePullRequest
-    displayName: Create PR to Merge Release Branch into Main
-    dependsOn:
-      - BuildDist
-      - Deployment
-    condition: succeeded('Deployment')
-    jobs:
-      - job: CreatePullRequest
-        displayName: Create Azure Repos Pull Request
-        pool:
-          vmImage: ubuntu-latest
-        variables:
-          releaseBranchRef: $[ stageDependencies.BuildDist.Build.outputs['ValidateReleaseBranch.ReleaseBranchRef'] ]
-          releaseBranchName: $[ stageDependencies.BuildDist.Build.outputs['ValidateReleaseBranch.ReleaseBranchName'] ]
-        steps:
-          - checkout: none
-
-          - script: |
-              set -euo pipefail
-
-              source_ref="${RELEASE_BRANCH_REF}"
-              source_branch="${RELEASE_BRANCH_NAME}"
-
-              if [ -z "${source_ref}" ] || [ -z "${source_branch}" ]; then
-                echo "Release branch details were not captured by the BuildDist stage."
-                exit 1
-              fi
-
-              if ! printf '%s\n' "${source_branch}" | grep -Eq '^V[0-9]+\.[0-9]+\.[0-9]+$'; then
-                echo "Refusing to create a merge PR from non-release branch: ${source_branch}"
-                exit 1
-              fi
-
-              if [ "${source_branch}" = "main" ]; then
-                echo "Current branch is main; no merge PR is needed."
-                exit 0
-              fi
-
-              python3 - <<'PY'
-              import base64
-              import json
-              import os
-              import sys
-              import urllib.parse
-              import urllib.request
-
-              token = os.environ["SYSTEM_ACCESSTOKEN"]
-              if not token:
-                  sys.stderr.write(
-                      "System.AccessToken is empty. Enable 'Allow scripts to access the OAuth token' for this pipeline.\n"
-                  )
-                  sys.exit(1)
-
-              collection_uri = os.environ["SYSTEM_COLLECTIONURI"]
-              project = os.environ["SYSTEM_TEAMPROJECT"]
-              repository_id = os.environ["BUILD_REPOSITORY_ID"]
-              source_ref = os.environ["RELEASE_BRANCH_REF"]
-              source_branch = os.environ["RELEASE_BRANCH_NAME"]
-              target_ref = "refs/heads/main"
-              api_version = "7.1-preview.1"
-
-              base_url = (
-                  f"{collection_uri}{urllib.parse.quote(project)}/_apis/git/"
-                  f"repositories/{urllib.parse.quote(repository_id)}/pullrequests"
-              )
-              auth_header = "Basic " + base64.b64encode(f":{token}".encode()).decode()
-
-              def request(url: str, method: str = "GET", body: dict | None = None):
-                  data = None
-                  headers = {
-                      "Authorization": auth_header,
-                      "Content-Type": "application/json",
-                  }
-                  if body is not None:
-                      data = json.dumps(body).encode("utf-8")
-                  req = urllib.request.Request(url, data=data, headers=headers, method=method)
-                  try:
-                      with urllib.request.urlopen(req) as response:
-                          return json.loads(response.read().decode("utf-8"))
-                  except urllib.error.HTTPError as error:
-                      sys.stderr.write(error.read().decode("utf-8"))
-                      raise
-
-              query = urllib.parse.urlencode(
-                  {
-                      "searchCriteria.sourceRefName": source_ref,
-                      "searchCriteria.targetRefName": target_ref,
-                      "searchCriteria.status": "active",
-                      "api-version": api_version,
-                  }
-              )
-              existing = request(f"{base_url}?{query}")
-              count = existing.get("count", 0)
-              if count:
-                  pr = existing["value"][0]
-                  print(f"Active PR already exists: {pr.get('url')}")
-                  sys.exit(0)
-
-              create_url = f"{base_url}?{urllib.parse.urlencode({'api-version': api_version})}"
-              title = f"Merge {source_branch} into main"
-              description = (
-                  f"Automated release merge PR created after successful production smoke testing of `{source_branch}`."
-              )
-              created = request(
-                  create_url,
-                  method="POST",
-                  body={
-                      "sourceRefName": source_ref,
-                      "targetRefName": target_ref,
-                      "title": title,
-                      "description": description,
-                  },
-              )
-              print(f"Created PR #{created.get('pullRequestId')}: {created.get('url')}")
-              PY
-            displayName: Create merge PR
-            env:
-              RELEASE_BRANCH_REF: $(releaseBranchRef)
-              RELEASE_BRANCH_NAME: $(releaseBranchName)
-              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
