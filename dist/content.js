@@ -664,7 +664,7 @@ function applyFeedFilters() {
   let hasNewPosts = false;
 
   posts.forEach((post) => {
-    if (currentSettings.showScanHighlights && !scannedPosts.has(post)) {
+    if (currentSettings.transparentMode && currentSettings.showScanHighlights && !scannedPosts.has(post)) {
       scannedPosts.add(post);
       post.dataset.lfrScanning = 'true';
       hasNewPosts = true;
@@ -871,10 +871,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message.type === 'SETTINGS_UPDATED') {
-    const wasShowingScanHighlights = currentSettings.showScanHighlights;
+    const wasShowingScanHighlights = currentSettings.transparentMode && currentSettings.showScanHighlights;
     currentSettings = normalizeSettings(message.settings);
-    if (!currentSettings.showScanHighlights) clearScanHighlights();
-    if (currentSettings.showScanHighlights && !wasShowingScanHighlights) scannedPosts = new WeakSet();
+    const shouldShowScanHighlights = currentSettings.transparentMode && currentSettings.showScanHighlights;
+    if (!shouldShowScanHighlights) clearScanHighlights();
+    if (shouldShowScanHighlights && !wasShowingScanHighlights) scannedPosts = new WeakSet();
     animateFilteredHides = true;
     applyAllFilters();
     animateFilteredHides = false;
