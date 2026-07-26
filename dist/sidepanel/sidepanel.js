@@ -4,7 +4,6 @@ const toggleLinkedInNews = document.getElementById('toggle-linkedin-news');
 const togglePuzzles = document.getElementById('toggle-puzzles');
 const toggleSidebarAds = document.getElementById('toggle-sidebar-ads');
 const toggleTransparentMode = document.getElementById('toggle-transparent-mode');
-const toggleScanHighlights = document.getElementById('toggle-scan-highlights');
 
 const defaultSettings = {
   hideSuggested: true,
@@ -14,7 +13,6 @@ const defaultSettings = {
   hidePuzzles: true,
   hideSidebarAds: true,
   transparentMode: false,
-  showScanHighlights: true,
 };
 
 let transparentMode = defaultSettings.transparentMode;
@@ -31,7 +29,6 @@ chrome.storage.sync.get(defaultSettings, (settings) => {
   toggleSidebarAds.checked = settings.hideSidebarAds;
   transparentMode = settings.transparentMode;
   toggleTransparentMode.checked = transparentMode;
-  toggleScanHighlights.checked = settings.showScanHighlights;
 });
 
 // ---------------------------------------------------------------------------
@@ -47,7 +44,6 @@ function onToggleChange() {
     hidePuzzles: togglePuzzles.checked,
     hideSidebarAds: toggleSidebarAds.checked,
     transparentMode,
-    showScanHighlights: toggleScanHighlights.checked,
   };
 
   chrome.runtime.sendMessage({ type: 'UPDATE_SETTINGS', settings });
@@ -62,4 +58,3 @@ toggleTransparentMode.addEventListener('change', () => {
   transparentMode = toggleTransparentMode.checked;
   onToggleChange();
 });
-toggleScanHighlights.addEventListener('change', onToggleChange);

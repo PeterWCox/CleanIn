@@ -14,7 +14,6 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
 
   function apply(settings, animateFilteredHides) {
     const posts = getPosts();
-    CleanInFeatures.scanHighlights.markNew(posts, settings.transparentMode && settings.showScanHighlights);
 
     posts.forEach((post) => {
       const filterKey = getFilterKey(post);

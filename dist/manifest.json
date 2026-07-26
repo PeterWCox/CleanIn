@@ -29,7 +29,6 @@
       "js": [
         "features/hideFeed.js",
         "features/hideSidebar.js",
-        "features/scanHighlights.js",
         "content.js"
       ],
       "run_at": "document_idle"

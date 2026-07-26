@@ -11,7 +11,6 @@ const defaultSettings = {
   hidePuzzles: true,
   hideSidebarAds: true,
   transparentMode: false,
-  showScanHighlights: true,
 };
 
 let currentSettings = { ...defaultSettings };
@@ -96,7 +95,6 @@ function init() {
     return;
   }
 
-  CleanInFeatures.scanHighlights.ensureStyles();
   loadSettings().then((settings) => {
     if (!isLinkedInFeedPage()) return;
     currentSettings = settings;
@@ -156,7 +154,6 @@ function teardownFiltering() {
   wakeApplyTimers.forEach(clearTimeout);
   wakeApplyTimers = [];
   CleanInFeatures.hideSidebar.stop();
-  CleanInFeatures.scanHighlights.stop();
   clearFilteredPageStyles();
 }
 
@@ -333,11 +330,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message.type === 'SETTINGS_UPDATED') {
-    const wasShowingScanHighlights = currentSettings.transparentMode && currentSettings.showScanHighlights;
     currentSettings = normalizeSettings(message.settings);
-    const shouldShowScanHighlights = currentSettings.transparentMode && currentSettings.showScanHighlights;
-    if (!shouldShowScanHighlights) CleanInFeatures.scanHighlights.stop();
-    if (shouldShowScanHighlights && !wasShowingScanHighlights) CleanInFeatures.scanHighlights.reset();
     animateFilteredHides = true;
     applyAllFilters();
     animateFilteredHides = false;
@@ -349,7 +342,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 // ---------------------------------------------------------------------------
 
 function startWhenFeaturesReady() {
-  if (!globalThis.CleanInFeatures?.hideFeed || !globalThis.CleanInFeatures?.hideSidebar || !globalThis.CleanInFeatures?.scanHighlights) {
+  if (!globalThis.CleanInFeatures?.hideFeed || !globalThis.CleanInFeatures?.hideSidebar) {
     setTimeout(startWhenFeaturesReady, 0);
     return;
   }

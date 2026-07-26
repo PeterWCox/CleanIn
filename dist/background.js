@@ -75,7 +75,7 @@ function ensureContentScriptOnTab(tabId, tab = null) {
 
     chrome.scripting.executeScript({
       target: { tabId },
-      files: ["features/hideFeed.js", "features/hideSidebar.js", "features/scanHighlights.js", "content.js"],
+      files: ["features/hideFeed.js", "features/hideSidebar.js", "content.js"],
     }).catch(() => {
       // The tab may be gone, still loading, or outside the extension's host permissions.
     });
@@ -119,5 +119,4 @@ const defaultSettings = {
   hidePuzzles: true,
   hideSidebarAds: true,
   transparentMode: false,
-  showScanHighlights: true,
 };
