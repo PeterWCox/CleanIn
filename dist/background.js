@@ -1,11 +1,3 @@
-// Open the side panel when the extension action button is clicked
-chrome.action.onClicked.addListener((tab) => {
-  chrome.sidePanel.open({ tabId: tab.id });
-});
-
-// Set side panel behavior to open on action click
-chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-
 chrome.runtime.onInstalled.addListener(ensureContentScriptsOnLinkedInTabs);
 chrome.runtime.onStartup.addListener(ensureContentScriptsOnLinkedInTabs);
 chrome.runtime.onInstalled.addListener(() => chrome.storage.sync.remove('hideSidebarPhrases'));
@@ -20,7 +12,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
-// Listen for messages from content script or side panel
+// Listen for messages from content script or popup
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "GET_SETTINGS") {
     chrome.storage.sync.get(defaultSettings, (settings) => {

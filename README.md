@@ -29,7 +29,7 @@ The source code is available if you'd prefer to build it yourself: [https://gith
 3. Open `chrome://extensions` in Chrome.
 4. Toggle Developer mode on (top right).
 5. Click Load unpacked and select the `dist/` folder.
-6. Visit [linkedin.com](https://www.linkedin.com/) or [linkedin.com/feed](https://www.linkedin.com/feed/) and open the extension side panel to adjust filters.
+6. Visit [linkedin.com](https://www.linkedin.com/) or [linkedin.com/feed](https://www.linkedin.com/feed/) and click the CleanIn toolbar icon to adjust filters in the settings popup.
 
 Chrome Web Store releases and local unpacked installs both use [dist/](dist/) directly, with the normal `CleanIn` name and production icon. There is no local source build step; Azure validates the checked-in folder and creates the Chrome Web Store artifact automatically in the first stage. The second stage is the manual store upload/release gate.
 

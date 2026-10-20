@@ -1,6 +1,6 @@
 # Chrome Web Store — Privacy tab answers (CleanIn)
 
-Copy you can paste into the Chrome Web Store **Privacy** tab. Written to match a packaged manifest with side panel, storage, and host permissions limited to the LinkedIn home page and feed URLs only (no `activeTab` unless you add it back).
+Copy you can paste into the Chrome Web Store **Privacy** tab. Written to match a packaged manifest with scripting, storage, and host permissions limited to the LinkedIn home page and feed URLs only (no `activeTab` unless you add it back).
 
 ---
 
@@ -15,9 +15,9 @@ You can toggle on/off this hiding behaviour by clicking the extensions icon.
 
 I welcome any suggested features or changes.
 
-## sidePanel justification
+## Settings popup
 
-The side panel is the extension’s settings UI. Users turn filters on or off and choose display options there. Chrome’s `sidePanel` permission is required so the extension can register and show that panel next to the page while the user is on LinkedIn.
+Users click the CleanIn toolbar icon to turn filters on or off and choose display options in a popup. The popup does not require an additional permission.
 
 ---
 
@@ -29,7 +29,7 @@ Settings (which categories to hide and display preferences) are saved with `chro
 
 ## activeTab justification
 
-If the packaged manifest only lists `sidePanel` and `storage`, and the dashboard still asks for `activeTab`, either re-upload the package so it matches the manifest, or add this only if you actually request that permission:
+If the packaged manifest only lists `scripting` and `storage`, and the dashboard still asks for `activeTab`, either re-upload the package so it matches the manifest, or add this only if you actually request that permission:
 
 *Not used in the current version; content scripts are limited to `https://www.linkedin.com/` and `https://www.linkedin.com/feed*` via host permissions, so `activeTab` is unnecessary.*
 

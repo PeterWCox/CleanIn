@@ -42,7 +42,7 @@ stages:
               python3 -m json.tool dist/manifest.json >/dev/null
               node --check dist/content.js
               node --check dist/background.js
-              node --check dist/sidepanel/sidepanel.js
+              node --check dist/popup/popup.js
               git diff --check
             displayName: Validate extension files
 
