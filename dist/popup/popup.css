@@ -89,6 +89,14 @@ main {
   font-weight: 600;
 }
 
+.app-version {
+  margin-left: 4px;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .mui-paper {
   border: 1px solid var(--divider);
   border-radius: var(--radius);

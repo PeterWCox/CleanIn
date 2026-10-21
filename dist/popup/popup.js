@@ -1,3 +1,5 @@
+document.getElementById('app-version').textContent = `v${chrome.runtime.getManifest().version}`;
+
 const toggleSuggested = document.getElementById('toggle-suggested');
 const togglePromoted = document.getElementById('toggle-promoted');
 const toggleLinkedInNews = document.getElementById('toggle-linkedin-news');
