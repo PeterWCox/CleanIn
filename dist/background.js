@@ -52,15 +52,17 @@ function ensureContentScriptsOnLinkedInTabs() {
 function ensureContentScriptOnTab(tabId, tab = null) {
   if (!tabId) return;
 
-  if (!tab?.url) {
+  if (!tab) {
     chrome.tabs.get(tabId, (currentTab) => {
-      if (chrome.runtime.lastError) return;
+      if (chrome.runtime.lastError || !currentTab?.url) return;
       ensureContentScriptOnTab(tabId, currentTab);
     });
     return;
   }
 
-  if (!isLinkedInFeedUrl(tab.url)) return;
+  // Chrome may omit URLs outside our host permissions. Wait for another tab
+  // event instead of repeatedly looking up a URL we cannot access.
+  if (!tab.url || !isLinkedInFeedUrl(tab.url)) return;
 
   chrome.tabs.sendMessage(tabId, { type: "PING" }, () => {
     if (!chrome.runtime.lastError) return;

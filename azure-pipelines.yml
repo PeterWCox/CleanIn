@@ -43,6 +43,7 @@ stages:
               node --check dist/content.js
               node --check dist/background.js
               node --check dist/popup/popup.js
+              node --test tests/background.test.cjs
               git diff --check
             displayName: Validate extension files
 

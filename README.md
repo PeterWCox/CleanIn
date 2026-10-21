@@ -33,6 +33,12 @@ The source code is available if you'd prefer to build it yourself: [https://gith
 
 Chrome Web Store releases and local unpacked installs both use [dist/](dist/) directly, with the normal `CleanIn` name and production icon. There is no local source build step; Azure validates the checked-in folder and creates the Chrome Web Store artifact automatically in the first stage. The second stage is the manual store upload/release gate.
 
+## Regression checks
+
+Run `node --test tests/background.test.cjs` (Node.js 20 or later) to check tab
+activation, missing URLs, and content-script recovery. The tests execute the
+actual background worker with asynchronous Chrome API callbacks.
+
 ## Caveats
 - Only matches the English LinkedIn UI. If your LinkedIn is in French, *toutes mes excuses*.
 - LinkedIn could rename "Suggested" to "Things You'll Love" tomorrow and break everything. That's the deal you sign when you scrape a SPA.
