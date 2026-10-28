@@ -52,4 +52,4 @@ in `/Users/petercox/Downloads/extensions/cleanin-dev` by default.
 
 Settings includes shared **Backup and restore** controls for all seven saved preferences, including both legacy promoted flags and transparent mode. Import requires confirmation and preserves preferences omitted by a partial backup. Failed restores can be retried.
 
-All extensions use `@petercoxhatesbridges/extension-ui@0.2.0` and pnpm 12.15.0. The versioned backup format rejects files belonging to another extension. Development and store builds of the same extension can exchange backups.
+All extensions use `@petercoxhatesbridges/extension-ui@0.2.3` and pnpm 12.15.0. The versioned backup format rejects files belonging to another extension. Development and store builds of the same extension can exchange backups.

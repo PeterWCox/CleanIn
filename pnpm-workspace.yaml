@@ -10,4 +10,4 @@ minimumReleaseAgeExclude:
   - '@storybook/react-vite@10.6.5'
   - '@storybook/react@10.6.5'
   - 'storybook@10.6.5'
-  - '@petercoxhatesbridges/extension-ui@0.2.0'
+  - '@petercoxhatesbridges/extension-ui@0.2.3'

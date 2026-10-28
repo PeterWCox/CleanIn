@@ -14,7 +14,7 @@
     "test:stories": "vitest run --project storybook"
   },
   "dependencies": {
-    "@petercoxhatesbridges/extension-ui": "0.2.0",
+    "@petercoxhatesbridges/extension-ui": "0.2.3",
     "lucide-react": "^1.31.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
