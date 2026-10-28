@@ -1,0 +1,43 @@
+{
+  "name": "cleanin",
+  "version": "1.5.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 11016 --strictPort",
+    "dev:extension": "vite build --watch --clearScreen false",
+    "build": "vite build",
+    "test": "node --test tests/background.test.cjs && vitest run --project unit",
+    "typecheck": "tsc --noEmit",
+    "storybook": "storybook dev --host 127.0.0.1 --port 16016 --exact-port",
+    "build-storybook": "storybook build",
+    "test:stories": "vitest run --project storybook"
+  },
+  "dependencies": {
+    "@petercoxhatesbridges/extension-ui": "0.1.2",
+    "lucide-react": "^1.31.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@storybook/addon-docs": "^10.6.5",
+    "@storybook/addon-mcp": "^10.6.5",
+    "@storybook/addon-vitest": "^10.6.5",
+    "@storybook/react-vite": "^10.6.5",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/chrome": "^0.0.268",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^5.2.0",
+    "@vitest/browser-playwright": "^4.1.12",
+    "happy-dom": "^20.11.1",
+    "playwright": "^1.64.1",
+    "prettier": "^3.9.6",
+    "storybook": "^10.6.5",
+    "typescript": "^5.9.2",
+    "vite": "^7.0.0",
+    "vitest": "^4.1.10"
+  }
+}

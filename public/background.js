@@ -23,6 +23,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   if (message.type === "UPDATE_SETTINGS") {
     chrome.storage.sync.set(message.settings, () => {
+      const error = chrome.runtime.lastError;
+      if (error) {
+        sendResponse({ ok: false, error: error.message || "Could not save preferences" });
+        return;
+      }
       // Notify content scripts on LinkedIn tabs to re-apply filters
       notifyLinkedInTabs(message.settings);
       sendResponse({ ok: true });

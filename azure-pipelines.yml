@@ -17,21 +17,33 @@ stages:
           vmImage: ubuntu-latest
         steps:
           - task: UseNode@1
-            displayName: Use Node.js 20
+            displayName: Use Node.js 24
             inputs:
-              versionSpec: 20.x
+              versionSpec: 24.x
 
           - script: |
+              set -euo pipefail
+              npm ci
+              npm test
+              npm run typecheck
+              npm run build
+            displayName: Install, check, and build extension
+            env:
+              CLEANIN_OUT_DIR: $(Build.ArtifactStagingDirectory)/extension
+              CLEANIN_PRODUCTION: "1"
+
+          - script: |
+              set -euo pipefail
               branch="${BUILD_SOURCEBRANCH#refs/heads/}"
               if ! printf '%s\n' "$branch" | grep -Eq '^V[0-9]+\.[0-9]+\.[0-9]+$'; then
                 echo "This pipeline only runs for release branches named VX.Y.Z, for example V1.3.3."
                 exit 1
               fi
 
-              manifest_version="$(node -e "console.log(JSON.parse(require('fs').readFileSync('dist/manifest.json', 'utf8')).version)")"
+              manifest_version="$(node -e "console.log(JSON.parse(require('fs').readFileSync('public/manifest.json', 'utf8')).version)")"
               branch_version="${branch#V}"
               if [ "$manifest_version" != "$branch_version" ]; then
-                echo "dist/manifest.json version ${manifest_version} does not match branch ${branch}."
+                echo "public/manifest.json version ${manifest_version} does not match branch ${branch}."
                 exit 1
               fi
 
@@ -39,24 +51,28 @@ stages:
             displayName: Validate release branch version
 
           - script: |
-              python3 -m json.tool dist/manifest.json >/dev/null
-              node --check dist/content.js
-              node --check dist/background.js
-              node --check dist/popup/popup.js
-              node --test tests/background.test.cjs
+              set -euo pipefail
+              extension_dir="$(Build.ArtifactStagingDirectory)/extension"
+              python3 -m json.tool "$extension_dir/manifest.json" >/dev/null
+              node --check "$extension_dir/content.js"
+              node --check "$extension_dir/background.js"
+              find "$extension_dir/popup" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
               git diff --check
             displayName: Validate extension files
 
           - script: |
-              version="$(node -e "console.log(JSON.parse(require('fs').readFileSync('dist/manifest.json', 'utf8')).version)")"
-              cd dist
-              zip -r "$(Build.ArtifactStagingDirectory)/cleanin-chrome-store-v${version}.zip" . -x "*.DS_Store" "__MACOSX/*"
+              set -euo pipefail
+              extension_dir="$(Build.ArtifactStagingDirectory)/extension"
+              version="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).version)' "$extension_dir/manifest.json")"
+              mkdir -p "$(Build.ArtifactStagingDirectory)/chrome-store-zip"
+              cd "$extension_dir"
+              zip -r "$(Build.ArtifactStagingDirectory)/chrome-store-zip/cleanin-chrome-store-v${version}.zip" . -x "*.DS_Store" "__MACOSX/*"
             displayName: Create Chrome Web Store ZIP
 
           - task: PublishPipelineArtifact@1
             displayName: Publish Chrome Web Store ZIP
             inputs:
-              targetPath: $(Build.ArtifactStagingDirectory)
+              targetPath: $(Build.ArtifactStagingDirectory)/chrome-store-zip
               artifact: chrome-store-zip
               publishLocation: pipeline
 
@@ -73,7 +89,7 @@ stages:
             displayName: Confirm Chrome Store upload
             timeoutInMinutes: 4320
             inputs:
-              notifyUsers: ''
+              notifyUsers: ""
               instructions: |
                 Download the chrome-store-zip artifact from this run.
                 Upload the cleanin-chrome-store-v*.zip package to the Chrome Developer Store.

@@ -1,3 +1,10 @@
 .metro/
 .claude/
 dist-dev/
+node_modules/
+dist/
+storybook-static/
+coverage/
+*.log
+
+*storybook.log
