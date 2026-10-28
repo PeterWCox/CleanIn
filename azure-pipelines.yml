@@ -21,12 +21,15 @@ stages:
             inputs:
               versionSpec: 24.x
 
+          - script: corepack enable && corepack prepare pnpm@12.15.0 --activate
+            displayName: Enable pnpm 12.15.0
+
           - script: |
               set -euo pipefail
-              npm ci
-              npm test
-              npm run typecheck
-              npm run build
+              pnpm install --frozen-lockfile
+              pnpm test
+              pnpm run typecheck
+              pnpm run build
             displayName: Install, check, and build extension
             env:
               CLEANIN_OUT_DIR: $(Build.ArtifactStagingDirectory)/extension

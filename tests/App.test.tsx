@@ -94,3 +94,57 @@ it("supports load and save retries", async () => {
     await failed.findByRole("button", { name: "Retry saving preferences" }),
   ).toBeDefined();
 });
+it("restores a backup and updates the displayed preference", async () => {
+  const store = demoStore();
+  const view = render(
+    <App store={store} version="1.5.2" initialTab="settings" />,
+  );
+  const user = userEvent.setup();
+  const input = await view.findByLabelText("Choose backup file");
+  const file = new File([""], "cleanin.json", { type: "application/json" });
+  file.text = async () =>
+    JSON.stringify({
+      format: "petercox-extension-backup",
+      version: 1,
+      extensionId: "cleanin",
+      extensionVersion: "1.5.2",
+      createdAt: new Date().toISOString(),
+      data: { transparentMode: true },
+    });
+  await user.upload(input, file);
+  await user.click(await view.findByRole("button", { name: "Restore backup" }));
+  await waitFor(() =>
+    expect(
+      view
+        .getByRole("switch", { name: "Show hidden content as transparent" })
+        .getAttribute("aria-checked"),
+    ).toBe("true"),
+  );
+  expect(await view.findByText("Backup restored.")).toBeDefined();
+  expect((await store.read()).transparentMode).toBe(true);
+});
+it("reports a failed restore without claiming success", async () => {
+  const view = render(
+    <App
+      store={demoStore("save-error")}
+      version="1.5.2"
+      initialTab="settings"
+    />,
+  );
+  const user = userEvent.setup();
+  const input = await view.findByLabelText("Choose backup file");
+  const file = new File([""], "cleanin.json", { type: "application/json" });
+  file.text = async () =>
+    JSON.stringify({
+      format: "petercox-extension-backup",
+      version: 1,
+      extensionId: "cleanin",
+      extensionVersion: "1.5.2",
+      createdAt: new Date().toISOString(),
+      data: { transparentMode: true },
+    });
+  await user.upload(input, file);
+  await user.click(await view.findByRole("button", { name: "Restore backup" }));
+  expect(await view.findByText(/Could not restore backup/)).toBeDefined();
+  expect(view.queryByText("Backup restored.")).toBeNull();
+});

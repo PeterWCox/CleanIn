@@ -134,6 +134,67 @@ describe("preferences persistence", () => {
     await Promise.resolve();
     expect(controller.getSnapshot().settings.hidePuzzles).toBe(false);
   });
+  it("exports persisted values and restores both promoted flags independently", async () => {
+    const { controller, store } = fixture({
+      hidePromoted: false,
+      hidePromotedBy: true,
+    });
+    await controller.load();
+    const backup = await controller.exportData();
+    await controller.update({ hidePromoted: true, hidePromotedBy: false });
+    await controller.importData(backup);
+    expect(await store.read()).toEqual(backup);
+    expect(controller.getSnapshot().settings).toEqual(backup);
+  });
+  it("rejects empty, unknown and non-boolean settings before writing", async () => {
+    const { controller, store } = fixture();
+    await controller.load();
+    for (const data of [
+      {},
+      { unknown: true },
+      { hidePuzzles: "false" },
+      { hidePuzzles: false, extra: true },
+    ]) {
+      await expect(controller.importData(data)).rejects.toThrow(
+        "invalid or unsupported",
+      );
+    }
+    expect(store.save).not.toHaveBeenCalled();
+  });
+  it("waits for queued writes and reports save failures during backup operations", async () => {
+    const { controller, store } = fixture();
+    await controller.load();
+    let release!: () => void;
+    vi.mocked(store.save).mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          release = resolve;
+        }),
+    );
+    const pending = controller.update({ hidePuzzles: false });
+    await Promise.resolve();
+    const exporting = controller.exportData();
+    release();
+    await pending;
+    await exporting;
+    vi.mocked(store.save).mockRejectedValueOnce(new Error("Quota"));
+    await expect(controller.importData({ hidePuzzles: true })).rejects.toThrow(
+      "could not be saved",
+    );
+    await expect(controller.exportData()).rejects.toThrow("could not be saved");
+  });
+  it("allows retrying a restore after a save fails", async () => {
+    const { controller, store } = fixture();
+    await controller.load();
+    vi.mocked(store.save).mockRejectedValueOnce(new Error("Quota"));
+    await expect(controller.importData({ hidePuzzles: false })).rejects.toThrow(
+      "could not be saved",
+    );
+    await expect(controller.exportData()).rejects.toThrow("could not be saved");
+    await controller.importData({ hidePuzzles: false });
+    expect((await store.read()).hidePuzzles).toBe(false);
+    expect(controller.getSnapshot().saveError).toBe(false);
+  });
   it("uses the existing Chrome message contract and propagates storage errors", async () => {
     const sendMessage = vi.fn((_message, callback) =>
       callback({ ok: false, error: "Quota exceeded" }),

@@ -30,7 +30,17 @@ export const Feed: Story = {
   },
 };
 export const Sidebar: Story = { args: { initialTab: "sidebar" } };
-export const Settings: Story = { args: { initialTab: "settings" } };
+export const Settings: Story = {
+  args: { initialTab: "settings" },
+  play: async ({ canvas }) => {
+    await expect(
+      await canvas.findByRole("button", { name: "Export backup" }),
+    ).toBeVisible();
+    await expect(
+      canvas.getByRole("button", { name: "Import backup" }),
+    ).toBeVisible();
+  },
+};
 export const Loading: Story = { args: { scenario: "loading" } };
 export const LoadError: Story = { args: { scenario: "load-error" } };
 export const SaveError: Story = {

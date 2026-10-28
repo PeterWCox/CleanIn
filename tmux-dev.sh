@@ -3,9 +3,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SESSION_NAME="cleanin-dev"
 if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
-  tmux new-session -d -s "$SESSION_NAME" -n preview -c "$ROOT_DIR" 'npm run dev'
+  tmux new-session -d -s "$SESSION_NAME" -n preview -c "$ROOT_DIR" 'pnpm run dev'
 fi
-for entry in 'preview|npm run dev' 'extension|npm run dev:extension' 'storybook|npm run storybook'; do
+for entry in 'preview|pnpm run dev' 'extension|pnpm run dev:extension' 'storybook|pnpm run storybook'; do
   name="${entry%%|*}"
   if ! tmux list-windows -t "$SESSION_NAME" -F '#W' | rg -qx "$name"; then
     tmux new-window -t "$SESSION_NAME" -n "$name" -c "$ROOT_DIR" "${entry#*|}"

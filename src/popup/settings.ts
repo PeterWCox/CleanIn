@@ -143,6 +143,33 @@ export class SettingsController {
         });
     }
   };
+  flush = async (allowFailedSave = false) => {
+    await this.queue;
+    if (!this.snapshot.ready || this.snapshot.loadError)
+      throw new Error("Preferences are not available.");
+    if (this.snapshot.saveError && !allowFailedSave)
+      throw new Error("Preferences could not be saved.");
+  };
+  exportData = async (): Promise<Record<string, unknown>> => {
+    await this.flush();
+    return { ...(await this.store.read()) };
+  };
+  importData = async (data: Record<string, unknown>) => {
+    const entries = Object.entries(data);
+    if (
+      !entries.length ||
+      entries.some(
+        ([key, value]) =>
+          !Object.hasOwn(defaultSettings, key) || typeof value !== "boolean",
+      )
+    )
+      throw new Error("Backup contains invalid or unsupported settings.");
+    await this.flush(true);
+    // Merge partial backups with the latest persisted values, retaining both promoted flags.
+    const current = await this.store.read();
+    await this.update({ ...current, ...data } as Settings);
+    await this.flush();
+  };
   update = (patch: Partial<Settings>) => {
     if (!this.snapshot.ready) return Promise.resolve();
     ++this.loadRevision;

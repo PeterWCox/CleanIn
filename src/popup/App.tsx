@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import {
+  BackupSection,
   Button,
   ExtensionShell,
   SettingsSection,
+  SettingsRow,
   Switch,
   TabsContent,
 } from "@petercoxhatesbridges/extension-ui";
@@ -73,15 +75,13 @@ export function App({ store, version, beta, initialTab = "feed" }: AppProps) {
     help?: string,
   ) => (
     <SettingsSection className="cleanin-setting">
-      <div className="cleanin-setting-row">
-        <span className="cleanin-setting-title">{label}</span>
+      <SettingsRow label={label} description={help}>
         <Switch
           checked={checked}
           onCheckedChange={onChange}
           aria-label={label}
         />
-      </div>
-      {help && <p className="cleanin-setting-help">{help}</p>}
+      </SettingsRow>
     </SettingsSection>
   );
   return (
@@ -153,6 +153,13 @@ export function App({ store, version, beta, initialTab = "feed" }: AppProps) {
               (checked) => toggle("transparentMode", checked),
               "Dim filtered content instead of removing it.",
             )}
+            <BackupSection
+              extensionId="cleanin"
+              extensionName="CleanIn"
+              extensionVersion={extensionVersion}
+              exportData={controller.exportData}
+              importData={controller.importData}
+            />
           </TabsContent>
           {state.saveError && (
             <div className="cleanin-error">

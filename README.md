@@ -26,18 +26,18 @@ The source code is available if you'd prefer to build it yourself: [https://gith
 
 1. Clone this repo.
 2. Optional: [snippets/](snippets/) has small reference HTML files for the feed and sidebar shapes the content script looks for.
-3. Run `npm ci`, `npm test`, `npm run typecheck`, and `npm run build`.
+3. Run `pnpm install --frozen-lockfile`, `pnpm test`, `pnpm run typecheck`, and `pnpm run build`.
 4. Open `chrome://extensions` in Chrome.
 5. Toggle Developer mode on (top right).
 6. Click Load unpacked and select `/Users/petercox/Downloads/extensions/cleanin-dev` (the default local build output).
 7. Visit [linkedin.com](https://www.linkedin.com/) or [linkedin.com/feed](https://www.linkedin.com/feed/) and click the CleanIn toolbar icon to adjust filters in the settings popup.
 
-`public/` contains the static extension files, assets, and manifest. The React popup lives in `src/popup/` and is bundled into the build output. `npm run dev` serves a preview at [http://127.0.0.1:11016/popup/popup.html](http://127.0.0.1:11016/popup/popup.html); `npm run storybook` starts Storybook at [http://localhost:16016](http://localhost:16016). The `tmux-dev.sh` script manages the `cleanin-dev` tmux session. Local builds display a Beta badge and keep manifest version `1.5.2` unchanged. Azure builds the production extension into the pipeline artifact staging directory; the manual store upload/release gate remains the final stage.
+`public/` contains the static extension files, assets, and manifest. The React popup lives in `src/popup/` and is bundled into the build output. `pnpm run dev` serves a preview at [http://127.0.0.1:11016/popup/popup.html](http://127.0.0.1:11016/popup/popup.html); `pnpm run storybook` starts Storybook at [http://localhost:16016](http://localhost:16016). The `tmux-dev.sh` script manages the `cleanin-dev` tmux session. Local builds display a Beta badge and keep manifest version `1.5.2` unchanged. Azure builds the production extension into the pipeline artifact staging directory; the manual store upload/release gate remains the final stage.
 
 ## Regression checks
 
-Use Node.js 24 or later. `npm test` runs the background and popup tests, and
-`npm run typecheck` checks types. `npm run test:stories` runs the popup stories in headless Chromium, and `npm run build-storybook` verifies the review build. `npm run build` creates the unpacked extension
+Use Node.js 24 or later. `pnpm test` runs the background and popup tests, and
+`pnpm run typecheck` checks types. `pnpm run test:stories` runs the popup stories in headless Chromium, and `pnpm run build-storybook` verifies the review build. `pnpm run build` creates the unpacked extension
 in `/Users/petercox/Downloads/extensions/cleanin-dev` by default.
 
 ## Caveats
@@ -47,3 +47,9 @@ in `/Users/petercox/Downloads/extensions/cleanin-dev` by default.
 
 ## License
 - MIT. Use it, fork it, ship a better version. Just don't promote it on LinkedIn.
+
+## Backups
+
+Settings includes shared **Backup and restore** controls for all seven saved preferences, including both legacy promoted flags and transparent mode. Import requires confirmation and preserves preferences omitted by a partial backup. Failed restores can be retried.
+
+All extensions use `@petercoxhatesbridges/extension-ui@0.2.0` and pnpm 12.15.0. The versioned backup format rejects files belonging to another extension. Development and store builds of the same extension can exchange backups.
