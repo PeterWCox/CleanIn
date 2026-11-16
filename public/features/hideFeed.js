@@ -14,7 +14,9 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   const VIDEO_POSTER = 'img:is([src*="/videocover-"], [srcset*="/videocover-"])';
   const VIDEO = `:is(.update-components-video, .feed-shared-video, [role="region"][aria-label="Video Player" i], video, picture:has(> ${VIDEO_POSTER}), ${VIDEO_POSTER})`;
   const MEDIA_SCOPE = `${FEED_POST}, .comments-comment-item, .comments-comment-entity, main, [role="main"], [role="dialog"]`;
-  const MEDIA = `${PHOTO}, ${VIDEO}`;
+  const PHOTO_TILE = 'a:has(> figure img)';
+  const MORE_PHOTOS = 'a:is([aria-label$="more images" i], :has(> [aria-label$="more images" i]))';
+  const MEDIA = `${PHOTO}, ${VIDEO}, ${PHOTO_TILE}`;
   const MARKER = 'data-cleanin-media-marker';
   const HIDDEN_MEDIA = 'data-cleanin-hidden-media';
   const markers = new Map();
@@ -45,8 +47,13 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
             border-radius: 6px;
             font: 600 11px/1.2 system-ui, sans-serif;
             text-align: center;
-            opacity: 0.85;
+            background: Canvas;
+            color: CanvasText;
+            cursor: pointer;
           }
+          [${MARKER}]:hover { background: ButtonFace; }
+          [${MARKER}]:focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
+          [${MARKER}][aria-expanded="true"] { inline-size: auto; aspect-ratio: auto; }
         `);
         document.adoptedStyleSheets.push(sheet);
         mediaObserver = new MutationObserver((records) => {
@@ -82,8 +89,11 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
 
   function updateMediaMarkers() {
     const hidden = new Map();
-    if (filterVideos) collectMedia(VIDEO, 'Video hidden', hidden);
-    if (filterPhotos) collectMedia(PHOTO, 'Photo hidden', hidden);
+    if (filterVideos) collectMedia(VIDEO, 'video', hidden);
+    if (filterPhotos) {
+      collectPhotoGrids(hidden);
+      collectMedia(PHOTO, 'photo', hidden);
+    }
 
     for (const [media, marker] of markers) {
       if (hidden.has(media) && marker.nextSibling === media) continue;
@@ -93,14 +103,56 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
     }
 
     for (const [media, label] of hidden) {
-      const marker = markers.get(media) ?? document.createElement('span');
-      if (marker.textContent !== label) marker.textContent = label;
       if (markers.has(media)) continue;
+      const marker = document.createElement('button');
+      marker.type = 'button';
       marker.setAttribute(MARKER, '');
+      marker.setAttribute('aria-expanded', 'false');
+      marker.textContent = `Show ${label}`;
+      marker.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const expanded = media.hasAttribute(HIDDEN_MEDIA);
+        if (!expanded && label === 'video') {
+          if (media instanceof HTMLVideoElement) media.pause();
+          else media.querySelectorAll('video').forEach((video) => video.pause());
+        }
+        media.toggleAttribute(HIDDEN_MEDIA, !expanded);
+        marker.setAttribute('aria-expanded', String(expanded));
+        marker.textContent = `${expanded ? 'Hide' : 'Show'} ${label}`;
+      });
       media.before(marker);
       media.setAttribute(HIDDEN_MEDIA, '');
       markers.set(media, marker);
     }
+  }
+
+  function collectPhotoGrids(hidden) {
+    const grids = new Set();
+    for (const tile of document.querySelectorAll(PHOTO_TILE)) {
+      if (!isPhotoTile(tile)) continue;
+      const scope = tile.parentElement?.closest(MEDIA_SCOPE);
+      let grid;
+      for (let parent = tile.parentElement;
+        scope && parent && parent !== scope && parent.matches('div:not([role])');
+        parent = parent.parentElement) {
+        if (parent.querySelector(`p, h1, h2, h3, ${VIDEO}`)) break;
+        if ([...parent.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) break;
+        const branches = [...parent.children].filter((child) => !child.hasAttribute(MARKER));
+        if (!branches.every((child) => isPhotoTile(child) || child.matches(MORE_PHOTOS) ||
+          [...child.querySelectorAll(PHOTO_TILE)].some(isPhotoTile))) break;
+        const tiles = [...parent.querySelectorAll(PHOTO_TILE)].filter(isPhotoTile);
+        if (tiles.length > 1) grid = parent;
+      }
+      if (grid) grids.add(grid);
+    }
+    for (const grid of grids) {
+      if (![...grids].some((other) => other !== grid && other.contains(grid))) hidden.set(grid, 'photos');
+    }
+  }
+
+  function isPhotoTile(element) {
+    return element.matches(PHOTO_TILE) && (element.querySelector(PHOTO_IMAGE) ||
+      (element.hostname === location.hostname && element.pathname === location.pathname));
   }
 
   function collectMedia(selector, label, hidden) {
@@ -108,7 +160,7 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
       const scope = media.parentElement?.closest(MEDIA_SCOPE);
       if (!scope || media.parentElement.closest(selector)) continue;
       const wrapper = getSizedMediaWrapper(media, scope);
-      if (!hidden.has(wrapper)) hidden.set(wrapper, label);
+      if (![...hidden.keys()].some((attachment) => attachment.contains(wrapper))) hidden.set(wrapper, label);
     }
   }
 
