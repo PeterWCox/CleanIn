@@ -37,6 +37,8 @@
 }
 .cleanin-setting {
   padding: 12px 0;
+}
+.cleanin-setting:not(:has(+ .ext-settings-section:not(.cleanin-setting))) {
   border-bottom: 1px solid #e5e5e5;
 }
 .cleanin-setting + .cleanin-setting {
