@@ -16,7 +16,8 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   const MEDIA_SCOPE = `${FEED_POST}, .comments-comment-item, .comments-comment-entity, main, [role="main"], [role="dialog"]`;
   const PHOTO_TILE = 'a:has(> figure img)';
   const MORE_PHOTOS = 'a:is([aria-label$="more images" i], :has(> [aria-label$="more images" i]))';
-  const MEDIA = `${PHOTO}, ${VIDEO}, ${PHOTO_TILE}`;
+  const PLAY_VIDEO = 'button[aria-label="Play video" i]';
+  const MEDIA = `${PHOTO}, ${VIDEO}, ${PHOTO_TILE}, ${PLAY_VIDEO}`;
   const MARKER = 'data-cleanin-media-marker';
   const HIDDEN_MEDIA = 'data-cleanin-hidden-media';
   const markers = new Map();
@@ -80,7 +81,7 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   }
 
   function affectsMedia(record) {
-    if (record.type === 'attributes') return record.target.matches('img, [role="region"]');
+    if (record.type === 'attributes') return record.target.matches('img, [role="region"], button') && !record.target.hasAttribute(MARKER);
     if ([...record.removedNodes].some((node) => node instanceof Element && node.hasAttribute(MARKER))) return true;
     return [...record.addedNodes, ...record.removedNodes].some((node) =>
       node instanceof Element && (node.matches(MEDIA) || node.querySelector(MEDIA))
@@ -161,22 +162,25 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
     for (const media of document.querySelectorAll(selector)) {
       const scope = media.parentElement?.closest(MEDIA_SCOPE);
       if (!scope || media.parentElement.closest(selector)) continue;
-      const wrapper = getSizedMediaWrapper(media, scope);
+      const wrapper = getSizedMediaWrapper(media, scope, label === 'video');
       if (![...hidden.keys()].some((attachment) => attachment.contains(wrapper))) hidden.set(wrapper, label);
     }
   }
 
-  function getSizedMediaWrapper(media, scope) {
+  function getSizedMediaWrapper(media, scope, isVideo) {
     let wrapper = media;
     for (let child = media, parent = media.parentElement;
       parent && parent !== scope && parent.matches('div:not([role])');
       child = parent, parent = parent.parentElement) {
       // Only climb through wrappers dedicated to this attachment.
-      if ([...parent.children].some((element) => element !== child && !element.hasAttribute(MARKER))) break;
+      const siblings = [...parent.children].filter((element) => element !== child && !element.hasAttribute(MARKER));
+      const hasPlayOverlay = isVideo && siblings.length > 0 && siblings.every((element) => element.matches(PLAY_VIDEO));
+      if (siblings.length && !hasPlayOverlay) break;
       if ([...parent.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) break;
 
       const style = getComputedStyle(parent);
-      if (style.aspectRatio !== 'auto' || parent.style.height || parent.style.blockSize ||
+      if (hasPlayOverlay || (isVideo && markers.has(parent)) ||
+          style.aspectRatio !== 'auto' || parent.style.height || parent.style.blockSize ||
           parseFloat(style.minHeight) > 0 || parseFloat(style.paddingBottom) > 0) {
         wrapper = parent;
       }
