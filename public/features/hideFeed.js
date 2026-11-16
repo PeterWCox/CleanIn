@@ -11,22 +11,123 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   const FEED_POST = ':is([data-component-type="LazyColumn"] > *, main article, [role="main"] article, .feed-shared-update-v2, .occludable-update, [data-activity-urn], [data-id*="urn:li:activity"], [data-urn*="urn:li:activity"])';
   const PHOTO_IMAGE = 'img:is([src*="/feedshare-shrink"], [src*="/feedshare-image-"], [srcset*="/feedshare-shrink"], [srcset*="/feedshare-image-"])';
   const PHOTO = `:is(.update-components-image, .feed-shared-image, a:has(> figure > ${PHOTO_IMAGE}), figure:has(> ${PHOTO_IMAGE}), picture:has(> ${PHOTO_IMAGE}), ${PHOTO_IMAGE})`;
-  const VIDEO = ':is(.update-components-video, .feed-shared-video, [role="region"][aria-label="Video Player"], video)';
-  let mediaStyles;
-  let mediaRules = '';
+  const VIDEO_POSTER = 'img:is([src*="/videocover-"], [srcset*="/videocover-"])';
+  const VIDEO = `:is(.update-components-video, .feed-shared-video, [role="region"][aria-label="Video Player" i], video, picture:has(> ${VIDEO_POSTER}), ${VIDEO_POSTER})`;
+  const MEDIA_SCOPE = `${FEED_POST}, .comments-comment-item, .comments-comment-entity, main, [role="main"], [role="dialog"]`;
+  const MEDIA = `${PHOTO}, ${VIDEO}`;
+  const MARKER = 'data-cleanin-media-marker';
+  const HIDDEN_MEDIA = 'data-cleanin-hidden-media';
+  const markers = new Map();
+  let mediaObserver;
+  let mediaFrame = null;
+  let filterPhotos = false;
+  let filterVideos = false;
 
-  function applyMediaFilters({ hidePhotos, hideVideos }) {
-    const rules = [
-      hidePhotos ? `${FEED_POST} ${PHOTO} { display: none !important; }` : '',
-      hideVideos ? `${FEED_POST} ${VIDEO} { display: none !important; }` : '',
-    ].join('');
-    if (rules === mediaRules) return;
-    if (!mediaStyles) {
-      mediaStyles = new CSSStyleSheet();
-      document.adoptedStyleSheets.push(mediaStyles);
+  function applyMediaFilters({ hidePhotos = false, hideVideos = false }) {
+    if (hidePhotos === filterPhotos && hideVideos === filterVideos) return;
+    filterPhotos = hidePhotos;
+    filterVideos = hideVideos;
+
+    if (hidePhotos || hideVideos) {
+      if (!mediaObserver) {
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(`
+          [${HIDDEN_MEDIA}] { display: none !important; }
+          [${MARKER}] {
+            display: inline-grid;
+            place-items: center;
+            box-sizing: border-box;
+            inline-size: 56px;
+            aspect-ratio: 1;
+            margin: 4px 8px;
+            padding: 4px;
+            border: 1px solid;
+            border-radius: 6px;
+            font: 600 11px/1.2 system-ui, sans-serif;
+            text-align: center;
+            opacity: 0.85;
+          }
+        `);
+        document.adoptedStyleSheets.push(sheet);
+        mediaObserver = new MutationObserver((records) => {
+          if (mediaFrame !== null || !records.some(affectsMedia)) return;
+          mediaFrame = requestAnimationFrame(() => {
+            mediaFrame = null;
+            updateMediaMarkers();
+          });
+        });
+      }
+      mediaObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['src', 'srcset', 'aria-label'],
+      });
+    } else {
+      mediaObserver?.disconnect();
+      if (mediaFrame !== null) cancelAnimationFrame(mediaFrame);
+      mediaFrame = null;
     }
-    mediaStyles.replaceSync(rules);
-    mediaRules = rules;
+
+    updateMediaMarkers();
+  }
+
+  function affectsMedia(record) {
+    if (record.type === 'attributes') return record.target.matches('img, [role="region"]');
+    if ([...record.removedNodes].some((node) => node instanceof Element && node.hasAttribute(MARKER))) return true;
+    return [...record.addedNodes, ...record.removedNodes].some((node) =>
+      node instanceof Element && (node.matches(MEDIA) || node.querySelector(MEDIA))
+    );
+  }
+
+  function updateMediaMarkers() {
+    const hidden = new Map();
+    if (filterVideos) collectMedia(VIDEO, 'Video hidden', hidden);
+    if (filterPhotos) collectMedia(PHOTO, 'Photo hidden', hidden);
+
+    for (const [media, marker] of markers) {
+      if (hidden.has(media) && marker.nextSibling === media) continue;
+      marker.remove();
+      media.removeAttribute(HIDDEN_MEDIA);
+      markers.delete(media);
+    }
+
+    for (const [media, label] of hidden) {
+      const marker = markers.get(media) ?? document.createElement('span');
+      if (marker.textContent !== label) marker.textContent = label;
+      if (markers.has(media)) continue;
+      marker.setAttribute(MARKER, '');
+      media.before(marker);
+      media.setAttribute(HIDDEN_MEDIA, '');
+      markers.set(media, marker);
+    }
+  }
+
+  function collectMedia(selector, label, hidden) {
+    for (const media of document.querySelectorAll(selector)) {
+      const scope = media.parentElement?.closest(MEDIA_SCOPE);
+      if (!scope || media.parentElement.closest(selector)) continue;
+      const wrapper = getSizedMediaWrapper(media, scope);
+      if (!hidden.has(wrapper)) hidden.set(wrapper, label);
+    }
+  }
+
+  function getSizedMediaWrapper(media, scope) {
+    let wrapper = media;
+    for (let child = media, parent = media.parentElement;
+      parent && parent !== scope && parent.matches('div:not([role])');
+      child = parent, parent = parent.parentElement) {
+      // Only climb through wrappers dedicated to this attachment.
+      if ([...parent.children].some((element) => element !== child && !element.hasAttribute(MARKER))) break;
+      if ([...parent.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) break;
+
+      const style = getComputedStyle(parent);
+      if (style.aspectRatio !== 'auto' || parent.style.height || parent.style.blockSize ||
+          parseFloat(style.minHeight) > 0 || parseFloat(style.paddingBottom) > 0) {
+        wrapper = parent;
+      }
+    }
+    return wrapper;
   }
 
   function getFeed() {
