@@ -7,6 +7,8 @@ const defaultSettings = {
   hideSuggested: true,
   hidePromoted: true,
   hidePromotedBy: true,
+  hidePhotos: false,
+  hideVideos: false,
   hideLinkedInNews: true,
   hidePuzzles: true,
   hideSidebarAds: true,
@@ -154,6 +156,7 @@ function teardownFiltering() {
   wakeApplyTimers.forEach(clearTimeout);
   wakeApplyTimers = [];
   CleanInFeatures.hideSidebar.stop();
+  CleanInFeatures.hideFeed.clearMediaFilters();
   clearFilteredPageStyles();
 }
 

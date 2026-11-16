@@ -4,10 +4,10 @@ import userEvent from "@testing-library/user-event";
 import { App } from "../src/popup/App";
 import { demoStore } from "../src/popup/demoStore";
 afterEach(cleanup);
-it("preserves all six controls across tabs with fixed version and footer", async () => {
+it("shows the feed, sidebar, and settings controls with a fixed version and footer", async () => {
   const view = render(<App store={demoStore()} version="1.5.2" beta />);
   const user = userEvent.setup();
-  await waitFor(() => expect(view.getAllByRole("switch")).toHaveLength(2));
+  await waitFor(() => expect(view.getAllByRole("switch")).toHaveLength(4));
   expect(
     view
       .getByRole("switch", { name: "Hide suggested posts" })

@@ -134,6 +134,12 @@ export function App({ store, version, beta, initialTab = "feed" }: AppProps) {
                 });
               },
             )}
+            {row("Hide photos", state.settings.hidePhotos, (checked) =>
+              toggle("hidePhotos", checked),
+            )}
+            {row("Hide videos", state.settings.hideVideos, (checked) =>
+              toggle("hideVideos", checked),
+            )}
           </TabsContent>
           <TabsContent value="sidebar">
             {row("Hide news", state.settings.hideLinkedInNews, (checked) =>

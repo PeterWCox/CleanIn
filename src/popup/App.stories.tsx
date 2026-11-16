@@ -23,10 +23,23 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Feed: Story = {
-  play: async ({ canvas }) => {
+  play: async ({ canvas, userEvent }) => {
     await expect(
       await canvas.findByRole("switch", { name: "Hide suggested posts" }),
     ).toHaveAttribute("aria-checked", "true");
+    const photos = canvas.getByRole("switch", { name: "Hide photos" });
+    const videos = canvas.getByRole("switch", { name: "Hide videos" });
+    await expect(photos).toHaveAttribute("aria-checked", "false");
+    await expect(videos).toHaveAttribute("aria-checked", "false");
+    await userEvent.click(photos);
+    await expect(photos).toHaveAttribute("aria-checked", "true");
+    await expect(videos).toHaveAttribute("aria-checked", "false");
+    await userEvent.click(videos);
+    await expect(videos).toHaveAttribute("aria-checked", "true");
+    await userEvent.click(photos);
+    await expect(photos).toHaveAttribute("aria-checked", "false");
+    await expect(videos).toHaveAttribute("aria-checked", "true");
+    await userEvent.click(videos);
   },
 };
 export const Sidebar: Story = { args: { initialTab: "sidebar" } };

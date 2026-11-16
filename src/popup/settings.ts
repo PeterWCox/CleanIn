@@ -2,6 +2,8 @@ export const defaultSettings = {
   hideSuggested: true,
   hidePromoted: true,
   hidePromotedBy: true,
+  hidePhotos: false,
+  hideVideos: false,
   hideLinkedInNews: true,
   hidePuzzles: true,
   hideSidebarAds: true,

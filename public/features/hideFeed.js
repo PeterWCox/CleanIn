@@ -8,12 +8,33 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   };
   const FILTER_KEYS = new Set(['suggested', 'promoted', 'promoted-by']);
   const FADE_DURATION = 220;
+  const FEED_POST = ':is([data-component-type="LazyColumn"] > *, main article, [role="main"] article, .feed-shared-update-v2, .occludable-update, [data-activity-urn], [data-id*="urn:li:activity"], [data-urn*="urn:li:activity"])';
+  const PHOTO_IMAGE = 'img:is([src*="/feedshare-shrink"], [src*="/feedshare-image-"], [srcset*="/feedshare-shrink"], [srcset*="/feedshare-image-"])';
+  const PHOTO = `:is(.update-components-image, .feed-shared-image, a:has(> figure > ${PHOTO_IMAGE}), figure:has(> ${PHOTO_IMAGE}), picture:has(> ${PHOTO_IMAGE}), ${PHOTO_IMAGE})`;
+  const VIDEO = ':is(.update-components-video, .feed-shared-video, [role="region"][aria-label="Video Player"], video)';
+  let mediaStyles;
+  let mediaRules = '';
+
+  function applyMediaFilters({ hidePhotos, hideVideos }) {
+    const rules = [
+      hidePhotos ? `${FEED_POST} ${PHOTO} { display: none !important; }` : '',
+      hideVideos ? `${FEED_POST} ${VIDEO} { display: none !important; }` : '',
+    ].join('');
+    if (rules === mediaRules) return;
+    if (!mediaStyles) {
+      mediaStyles = new CSSStyleSheet();
+      document.adoptedStyleSheets.push(mediaStyles);
+    }
+    mediaStyles.replaceSync(rules);
+    mediaRules = rules;
+  }
 
   function getFeed() {
     return document.querySelector('[data-component-type="LazyColumn"]');
   }
 
   function apply(settings, animateFilteredHides) {
+    applyMediaFilters(settings);
     const posts = getPosts();
 
     posts.forEach((post) => {
@@ -158,5 +179,5 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
     return (element.textContent || '').replace(/\s+/g, ' ').trim();
   }
 
-  return { apply, getFeed };
+  return { apply, getFeed, clearMediaFilters: () => applyMediaFilters({}) };
 })();
