@@ -1,13 +1,13 @@
 {
   "name": "cleanin",
-  "version": "1.5.2",
+  "version": "1.6.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 11016 --strictPort",
     "dev:extension": "vite build --watch --clearScreen false",
     "build": "vite build",
-    "test": "node --test tests/background.test.cjs && vitest run --project unit",
+    "test": "bun test tests/background.test.cjs && vitest run --project unit",
     "typecheck": "tsc --noEmit",
     "storybook": "storybook dev --host 127.0.0.1 --port 16016 --exact-port",
     "build-storybook": "storybook build",

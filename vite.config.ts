@@ -8,7 +8,16 @@ const production = process.env.CLEANIN_PRODUCTION === "1";
 export default defineConfig({
   root: "src",
   publicDir: "../public",
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: "watch-extension-manifest",
+      apply: "build",
+      buildStart() {
+        this.addWatchFile(resolve("public/manifest.json"));
+      },
+    },
+  ],
   define: {
     __CLEANIN_BETA__: JSON.stringify(!production),
     __CLEANIN_VERSION__: JSON.stringify(extensionVersion),

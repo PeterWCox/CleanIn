@@ -17,9 +17,9 @@ The source code is available if you'd prefer to build it yourself: [https://gith
 - Chrome Web Store form copy and justifications: [docs/chrome-web-store-privacy-answers.md](docs/chrome-web-store-privacy-answers.md) (see also [docs/README.md](docs/README.md)).
 - Release TLDR:
   1. Create a `VX.Y.Z` release branch, for example `V1.5.0`, and bump `public/manifest.json` on that branch.
-  2. Push the branch to start Azure. `main` does not trigger builds.
-  3. Azure installs dependencies, runs the tests and typecheck, builds the extension, validates that the generated manifest version matches the branch name, validates the extension files, and publishes the `cleanin-chrome-store-v*.zip` artifact in `Build Dist`.
-  4. In the `Upload to Chrome Store` manual stage, download the artifact, upload it to the Chrome Developer Store, and resume the pipeline.
+  2. Push the branch to start the [GitHub Actions release workflow](https://github.com/PeterWCox/CleanIn/actions/workflows/release.yml).
+  3. The workflow checks that the release branch matches the manifest version, runs the tests and typecheck, and uploads the production ZIP as a run artifact.
+  4. Download `cleanin-chrome-store-v*.zip` from the workflow run and upload it to the Chrome Web Store Developer Dashboard.
   5. Release the uploaded package through the Chrome Web Store, then merge the release branch into `main` after production testing.
 
 ## Developer instructions
@@ -32,11 +32,11 @@ The source code is available if you'd prefer to build it yourself: [https://gith
 6. Click Load unpacked and select `/Users/petercox/Downloads/extensions/cleanin-dev` (the default local build output).
 7. Visit [linkedin.com](https://www.linkedin.com/) or [linkedin.com/feed](https://www.linkedin.com/feed/) and click the CleanIn toolbar icon to adjust filters in the settings popup.
 
-`public/` contains the static extension files, assets, and manifest. The React popup lives in `src/popup/` and is bundled into the build output. `pnpm run dev` serves a preview at [http://127.0.0.1:11016/popup/popup.html](http://127.0.0.1:11016/popup/popup.html); `pnpm run storybook` starts Storybook at [http://localhost:16016](http://localhost:16016). The `tmux-dev.sh` script manages the `cleanin-dev` tmux session. Local builds display a Beta badge and keep manifest version `1.5.2` unchanged. Azure builds the production extension into the pipeline artifact staging directory; the manual store upload/release gate remains the final stage.
+`public/` contains the static extension files, assets, and manifest. The React popup lives in `src/popup/` and is bundled into the build output. `pnpm run dev` serves a preview at [http://127.0.0.1:11016/popup/popup.html](http://127.0.0.1:11016/popup/popup.html); `pnpm run storybook` starts Storybook at [http://localhost:16016](http://localhost:16016). The `tmux-dev.sh` script manages the `cleanin-dev` tmux session. Local builds display a Beta badge and use the version from `public/manifest.json`. Run `pnpm run dev:extension` to rebuild the unpacked extension when the manifest changes. Click Reload for CleanIn in `chrome://extensions` to load the rebuilt manifest.
 
 ## Regression checks
 
-Use Node.js 24 or later. `pnpm test` runs the background and popup tests, and
+Use Node.js 24 or later, pnpm 12.15.0, and [Bun 1.4.4](https://bun.com/docs/installation). `pnpm test` runs the background tests with Bun and the popup tests with Vitest, and
 `pnpm run typecheck` checks types. `pnpm run test:stories` runs the popup stories in headless Chromium, and `pnpm run build-storybook` verifies the review build. `pnpm run build` creates the unpacked extension
 in `/Users/petercox/Downloads/extensions/cleanin-dev` by default.
 
