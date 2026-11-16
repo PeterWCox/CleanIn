@@ -134,6 +134,11 @@ export function App({ store, version, beta, initialTab = "feed" }: AppProps) {
                 });
               },
             )}
+            {row(
+              "Hide new position announcements",
+              state.settings.hideNewPositionPosts,
+              (checked) => toggle("hideNewPositionPosts", checked),
+            )}
             {row("Hide photos", state.settings.hidePhotos, (checked) =>
               toggle("hidePhotos", checked),
             )}

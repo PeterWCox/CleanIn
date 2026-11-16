@@ -2,11 +2,12 @@ globalThis.CleanInFeatures = globalThis.CleanInFeatures || {};
 
 globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (() => {
   const FILTER_STYLES = {
+    'new-position': ['2px solid rgba(0, 120, 90, 0.4)', 'rgba(0, 120, 90, 0.06)'],
     suggested: ['2px solid rgba(0, 100, 255, 0.4)', 'rgba(0, 100, 255, 0.06)'],
     promoted: ['2px solid rgba(220, 0, 0, 0.4)', 'rgba(220, 0, 0, 0.06)'],
     'promoted-by': ['2px solid rgba(128, 0, 255, 0.4)', 'rgba(128, 0, 255, 0.06)'],
   };
-  const FILTER_KEYS = new Set(['suggested', 'promoted', 'promoted-by']);
+  const FILTER_KEYS = new Set(['suggested', 'promoted', 'promoted-by', 'new-position']);
   const FADE_DURATION = 220;
   const FEED_POST = ':is([data-component-type="LazyColumn"] > *, main article, [role="main"] article, .feed-shared-update-v2, .occludable-update, [data-activity-urn], [data-id*="urn:li:activity"], [data-urn*="urn:li:activity"])';
   const PHOTO_IMAGE = 'img:is([src*="/feedshare-shrink"], [src*="/feedshare-image-"], [srcset*="/feedshare-shrink"], [srcset*="/feedshare-image-"])';
@@ -203,7 +204,7 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
         return;
       }
 
-      const shouldHide = (filterKey === 'suggested' && settings.hideSuggested) || (filterKey === 'promoted' && settings.hidePromoted) || (filterKey === 'promoted-by' && settings.hidePromotedBy);
+      const shouldHide = (filterKey === 'suggested' && settings.hideSuggested) || (filterKey === 'promoted' && settings.hidePromoted) || (filterKey === 'promoted-by' && settings.hidePromotedBy) || (filterKey === 'new-position' && settings.hideNewPositionPosts);
       if (shouldHide) applyHiddenPost(post, filterKey, settings, animateFilteredHides);
       else if (post.dataset.lfrHidden === filterKey) clearPostStyle(post, animateFilteredHides);
     });
@@ -220,13 +221,14 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
       'main [data-id*="urn:li:activity"]', '[role="main"] [data-id*="urn:li:activity"]',
       'main [data-urn*="urn:li:activity"]', '[role="main"] [data-urn*="urn:li:activity"]',
     ].forEach((selector) => document.querySelectorAll(selector).forEach((post) => posts.push(post)));
-    return [...new Set(posts)].filter(isVisible);
+    return [...new Set(posts)].filter((post) => FILTER_KEYS.has(post.dataset.lfrHidden) || isVisible(post));
   }
 
   function getFilterKey(post) {
     if (hasLabel(post, (label) => label === 'Suggested')) return 'suggested';
     if (hasLabel(post, (label) => label.startsWith('Promoted by'))) return 'promoted-by';
     if (hasLabel(post, (label) => label === 'Promoted')) return 'promoted';
+    if (hasLabel(post, (label) => label === 'Starting a new position')) return 'new-position';
     return null;
   }
 

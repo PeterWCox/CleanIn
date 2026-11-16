@@ -5,6 +5,7 @@ globalThis.__cleanInContentScriptLoaded = true;
 
 const defaultSettings = {
   hideSuggested: true,
+  hideNewPositionPosts: true,
   hidePromoted: true,
   hidePromotedBy: true,
   hidePhotos: false,
