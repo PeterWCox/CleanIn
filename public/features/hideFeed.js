@@ -15,10 +15,11 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   const VIDEO = `:is(.update-components-video, .feed-shared-video, [role="region"][aria-label="Video Player" i], video, picture:has(> ${VIDEO_POSTER}), ${VIDEO_POSTER})`;
   const MEDIA_SCOPE = `${FEED_POST}, .comments-comment-item, .comments-comment-entity, main, [role="main"], [role="dialog"]`;
   const PHOTO_TILE = 'a:has(> figure img)';
-  const MORE_PHOTOS = 'a:is([aria-label$="more images" i], :has(> [aria-label$="more images" i]))';
+  const MORE_PHOTOS_LABEL = ':is([aria-label$="more image" i], [aria-label$="more images" i])';
+  const MORE_PHOTOS = `a:is(${MORE_PHOTOS_LABEL}, :has(> ${MORE_PHOTOS_LABEL}))`;
   const PLAY_VIDEO = 'button[aria-label="Play video" i]';
   const CELEBRATION_IMAGE = 'img[alt="View celebration image" i]';
-  const MEDIA = `${PHOTO}, ${VIDEO}, ${PHOTO_TILE}, ${PLAY_VIDEO}, ${CELEBRATION_IMAGE}`;
+  const MEDIA = `${PHOTO}, ${VIDEO}, ${PHOTO_TILE}, ${PLAY_VIDEO}, ${CELEBRATION_IMAGE}, ${MORE_PHOTOS_LABEL}`;
   const MARKER = 'data-cleanin-media-marker';
   const HIDDEN_MEDIA = 'data-cleanin-hidden-media';
   const markers = new Map();
@@ -84,7 +85,9 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   }
 
   function affectsMedia(record) {
-    if (record.type === 'attributes') return record.target.matches('img, [role="region"], button') && !record.target.hasAttribute(MARKER);
+    if (record.type === 'attributes') {
+      return record.target.matches(`img, [role="region"], button, ${MORE_PHOTOS_LABEL}`) && !record.target.hasAttribute(MARKER);
+    }
     if ([...record.removedNodes].some((node) => node instanceof Element && node.hasAttribute(MARKER))) return true;
     return [...record.addedNodes, ...record.removedNodes].some((node) =>
       node instanceof Element && (node.matches(MEDIA) || node.querySelector(MEDIA))
