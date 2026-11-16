@@ -40,7 +40,7 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
             place-items: center;
             box-sizing: border-box;
             inline-size: 56px;
-            aspect-ratio: 1;
+            block-size: 56px;
             margin: 4px 8px;
             padding: 4px;
             border: 1px solid;
@@ -53,7 +53,7 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
           }
           [${MARKER}]:hover { background: ButtonFace; }
           [${MARKER}]:focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
-          [${MARKER}][aria-expanded="true"] { inline-size: auto; aspect-ratio: auto; }
+          [${MARKER}][aria-expanded="true"] { inline-size: auto; block-size: auto; }
         `);
         document.adoptedStyleSheets.push(sheet);
         mediaObserver = new MutationObserver((records) => {
@@ -135,7 +135,9 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
       for (let parent = tile.parentElement;
         scope && parent && parent !== scope && parent.matches('div:not([role])');
         parent = parent.parentElement) {
-        if (parent.querySelector(`p, h1, h2, h3, ${VIDEO}`)) break;
+        if (parent.querySelector(VIDEO)) break;
+        const textBlocks = parent.querySelectorAll('p, h1, h2, h3');
+        if ([...textBlocks].some((block) => !block.closest(MORE_PHOTOS))) break;
         if ([...parent.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) break;
         const branches = [...parent.children].filter((child) => !child.hasAttribute(MARKER));
         if (!branches.every((child) => isPhotoTile(child) || child.matches(MORE_PHOTOS) ||
