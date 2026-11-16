@@ -2,12 +2,11 @@ globalThis.CleanInFeatures = globalThis.CleanInFeatures || {};
 
 globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (() => {
   const FILTER_STYLES = {
-    'new-position': ['2px solid rgba(0, 120, 90, 0.4)', 'rgba(0, 120, 90, 0.06)'],
     suggested: ['2px solid rgba(0, 100, 255, 0.4)', 'rgba(0, 100, 255, 0.06)'],
     promoted: ['2px solid rgba(220, 0, 0, 0.4)', 'rgba(220, 0, 0, 0.06)'],
     'promoted-by': ['2px solid rgba(128, 0, 255, 0.4)', 'rgba(128, 0, 255, 0.06)'],
   };
-  const FILTER_KEYS = new Set(['suggested', 'promoted', 'promoted-by', 'new-position']);
+  const FILTER_KEYS = new Set(['suggested', 'promoted', 'promoted-by']);
   const FADE_DURATION = 220;
   const FEED_POST = ':is([data-component-type="LazyColumn"] > *, main article, [role="main"] article, .feed-shared-update-v2, .occludable-update, [data-activity-urn], [data-id*="urn:li:activity"], [data-urn*="urn:li:activity"])';
   const PHOTO_IMAGE = 'img:is([src*="/feedshare-shrink"], [src*="/feedshare-image-"], [srcset*="/feedshare-shrink"], [srcset*="/feedshare-image-"])';
@@ -18,7 +17,8 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   const PHOTO_TILE = 'a:has(> figure img)';
   const MORE_PHOTOS = 'a:is([aria-label$="more images" i], :has(> [aria-label$="more images" i]))';
   const PLAY_VIDEO = 'button[aria-label="Play video" i]';
-  const MEDIA = `${PHOTO}, ${VIDEO}, ${PHOTO_TILE}, ${PLAY_VIDEO}`;
+  const CELEBRATION_IMAGE = 'img[alt="View celebration image" i]';
+  const MEDIA = `${PHOTO}, ${VIDEO}, ${PHOTO_TILE}, ${PLAY_VIDEO}, ${CELEBRATION_IMAGE}`;
   const MARKER = 'data-cleanin-media-marker';
   const HIDDEN_MEDIA = 'data-cleanin-hidden-media';
   const markers = new Map();
@@ -26,13 +26,15 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   let mediaFrame = null;
   let filterPhotos = false;
   let filterVideos = false;
+  let filterNewPositionImages = false;
 
-  function applyMediaFilters({ hidePhotos = false, hideVideos = false }) {
-    if (hidePhotos === filterPhotos && hideVideos === filterVideos) return;
+  function applyMediaFilters({ hidePhotos = false, hideVideos = false, hideNewPositionPosts = false }) {
+    if (hidePhotos === filterPhotos && hideVideos === filterVideos && hideNewPositionPosts === filterNewPositionImages) return;
     filterPhotos = hidePhotos;
     filterVideos = hideVideos;
+    filterNewPositionImages = hideNewPositionPosts;
 
-    if (hidePhotos || hideVideos) {
+    if (hidePhotos || hideVideos || hideNewPositionPosts) {
       if (!mediaObserver) {
         const sheet = new CSSStyleSheet();
         sheet.replaceSync(`
@@ -70,7 +72,7 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: ['src', 'srcset', 'aria-label'],
+        attributeFilter: ['src', 'srcset', 'aria-label', 'alt'],
       });
     } else {
       mediaObserver?.disconnect();
@@ -96,6 +98,7 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
       collectPhotoGrids(hidden);
       collectMedia(PHOTO, 'photo', hidden);
     }
+    if (filterNewPositionImages) collectNewPositionImages(hidden);
 
     for (const [media, marker] of markers) {
       if (hidden.has(media) && marker.nextSibling === media) continue;
@@ -125,6 +128,16 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
       media.before(marker);
       media.setAttribute(HIDDEN_MEDIA, '');
       markers.set(media, marker);
+    }
+  }
+
+  function collectNewPositionImages(hidden) {
+    for (const image of document.querySelectorAll(CELEBRATION_IMAGE)) {
+      const post = image.closest(FEED_POST);
+      if (!post || !hasLabel(post, (label) => label === 'Starting a new position')) continue;
+      const artwork = image.closest('figure, picture') ?? image;
+      if ([...hidden.keys()].some((attachment) => attachment.contains(artwork))) continue;
+      hidden.set(artwork, 'photo');
     }
   }
 
@@ -204,7 +217,7 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
         return;
       }
 
-      const shouldHide = (filterKey === 'suggested' && settings.hideSuggested) || (filterKey === 'promoted' && settings.hidePromoted) || (filterKey === 'promoted-by' && settings.hidePromotedBy) || (filterKey === 'new-position' && settings.hideNewPositionPosts);
+      const shouldHide = (filterKey === 'suggested' && settings.hideSuggested) || (filterKey === 'promoted' && settings.hidePromoted) || (filterKey === 'promoted-by' && settings.hidePromotedBy);
       if (shouldHide) applyHiddenPost(post, filterKey, settings, animateFilteredHides);
       else if (post.dataset.lfrHidden === filterKey) clearPostStyle(post, animateFilteredHides);
     });
@@ -228,7 +241,6 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
     if (hasLabel(post, (label) => label === 'Suggested')) return 'suggested';
     if (hasLabel(post, (label) => label.startsWith('Promoted by'))) return 'promoted-by';
     if (hasLabel(post, (label) => label === 'Promoted')) return 'promoted';
-    if (hasLabel(post, (label) => label === 'Starting a new position')) return 'new-position';
     return null;
   }
 

@@ -135,7 +135,7 @@ export function App({ store, version, beta, initialTab = "feed" }: AppProps) {
               },
             )}
             {row(
-              "Hide new position announcements",
+              "Hide new position images",
               state.settings.hideNewPositionPosts,
               (checked) => toggle("hideNewPositionPosts", checked),
             )}
