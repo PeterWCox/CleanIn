@@ -9,7 +9,10 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   const FILTER_KEYS = new Set(['suggested', 'promoted', 'promoted-by']);
   const FADE_DURATION = 220;
   const FEED_POST = ':is([data-component-type="LazyColumn"] > *, main article, [role="main"] article, .feed-shared-update-v2, .occludable-update, [data-activity-urn], [data-id*="urn:li:activity"], [data-urn*="urn:li:activity"])';
-  const PHOTO_IMAGE = 'img:is([src*="/feedshare-shrink"], [src*="/feedshare-image-"], [srcset*="/feedshare-shrink"], [srcset*="/feedshare-image-"])';
+  const PHOTO_IMAGE = `:is(${[
+    'img:is([src*="/feedshare-shrink"], [src*="/feedshare-image-"], [srcset*="/feedshare-shrink"], [srcset*="/feedshare-image-"])',
+    'img[alt="View image" i]:is([src*="/image-shrink_"], [srcset*="/image-shrink_"])',
+  ].join(', ')})`;
   const PHOTO = `:is(.update-components-image, .feed-shared-image, a:has(> figure > ${PHOTO_IMAGE}), figure:has(> ${PHOTO_IMAGE}), picture:has(> ${PHOTO_IMAGE}), ${PHOTO_IMAGE})`;
   const VIDEO_POSTER = 'img:is([src*="/videocover-"], [srcset*="/videocover-"])';
   const VIDEO = `:is(.update-components-video, .feed-shared-video, [role="region"][aria-label="Video Player" i], video, picture:has(> ${VIDEO_POSTER}), ${VIDEO_POSTER})`;
