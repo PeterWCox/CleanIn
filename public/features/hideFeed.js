@@ -22,7 +22,10 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   const MORE_PHOTOS = `a:is(${MORE_PHOTOS_LABEL}, :has(> ${MORE_PHOTOS_LABEL}))`;
   const PLAY_VIDEO = 'button[aria-label="Play video" i]';
   const CELEBRATION_IMAGE = 'img[alt="View celebration image" i]';
-  const MEDIA = `${PHOTO}, ${VIDEO}, ${PHOTO_TILE}, ${PLAY_VIDEO}, ${CELEBRATION_IMAGE}, ${MORE_PHOTOS_LABEL}`;
+  const DOCUMENT_SLIDE = 'img:is([src*="/feedshare-document-images"], [src*="/ads-document-images"], [srcset*="/feedshare-document-images"], [srcset*="/ads-document-images"])';
+  const DOCUMENT_PREVIEW = 'div:has(> div > button[aria-label="Full screen" i])';
+  const EVENT_COVER = 'img:is([src*="/video-liveannouncement-"], [srcset*="/video-liveannouncement-"])';
+  const MEDIA = `${PHOTO}, ${VIDEO}, ${PHOTO_TILE}, ${PLAY_VIDEO}, ${CELEBRATION_IMAGE}, ${MORE_PHOTOS_LABEL}, ${DOCUMENT_SLIDE}, ${EVENT_COVER}`;
   const MARKER = 'data-cleanin-media-marker';
   const HIDDEN_MEDIA = 'data-cleanin-hidden-media';
   const markers = new Map();
@@ -101,8 +104,10 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
     const hidden = new Map();
     if (filterVideos) collectMedia(VIDEO, 'video', hidden);
     if (filterPhotos) {
+      collectDocumentPreviews(hidden);
       collectPhotoGrids(hidden);
       collectMedia(PHOTO, 'photo', hidden);
+      collectMedia(`:is(figure:has(> ${EVENT_COVER}), ${EVENT_COVER})`, 'photo', hidden);
     }
     if (filterNewPositionImages) collectNewPositionImages(hidden);
 
@@ -134,6 +139,17 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
       media.before(marker);
       media.setAttribute(HIDDEN_MEDIA, '');
       markers.set(media, marker);
+    }
+  }
+
+  function collectDocumentPreviews(hidden) {
+    for (const slide of document.querySelectorAll(DOCUMENT_SLIDE)) {
+      const post = slide.closest(FEED_POST);
+      const carousel = slide.closest('ul')?.parentElement;
+      if (!post || !carousel || !post.contains(carousel)) continue;
+      const wrapper = carousel.closest(DOCUMENT_PREVIEW);
+      const preview = wrapper && post.contains(wrapper) ? wrapper : carousel;
+      hidden.set(preview, 'document');
     }
   }
 
