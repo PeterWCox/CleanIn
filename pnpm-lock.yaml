@@ -167,8 +167,8 @@ importers:
   .:
     dependencies:
       '@petercoxhatesbridges/extension-ui':
-        specifier: 0.2.3
-        version: 0.2.3(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        specifier: file:vendor/petercoxhatesbridges-extension-ui-0.2.8.tgz
+        version: file:vendor/petercoxhatesbridges-extension-ui-0.2.8.tgz(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       lucide-react:
         specifier: ^1.31.0
         version: 1.62.0(@types/react@19.3.0)(react@19.3.1)
@@ -784,8 +784,9 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@petercoxhatesbridges/extension-ui@0.2.3':
-    resolution: {integrity: sha512-CaxLzY66jgLwgakU/y+oKsVVuRMTIycxiQvGUpnFlcfUGqUDXXo2SB9gWJO5ov7K0Y68YVMi3XpLsPFayZ9V5Q==}
+  '@petercoxhatesbridges/extension-ui@file:vendor/petercoxhatesbridges-extension-ui-0.2.8.tgz':
+    resolution: {integrity: sha512-e6odut/DBb+n0J8aAg2iQA1c3HVvtkZz6aVLHD81MhRrxP4pKxlHlcc3sjXvr375DUlFFLBT+BUn0sVmgkmbSA==, tarball: file:vendor/petercoxhatesbridges-extension-ui-0.2.8.tgz}
+    version: 0.2.8
     peerDependencies:
       react: ^19.0.0
       react-dom: ^19.0.0
@@ -2447,7 +2448,7 @@ snapshots:
   '@oxc-resolver/binding-win32-x64-msvc@11.21.2':
     optional: true
 
-  '@petercoxhatesbridges/extension-ui@0.2.3(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+  '@petercoxhatesbridges/extension-ui@file:vendor/petercoxhatesbridges-extension-ui-0.2.8.tgz(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       '@radix-ui/react-tabs': 1.2.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react: 19.3.1

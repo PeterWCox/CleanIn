@@ -24,7 +24,7 @@ const tabs = [
     id: "feed",
     label: "Feed",
     icon: <House aria-hidden="true" />,
-    description: "Hide suggested and promoted posts from your LinkedIn feed.",
+    description: "Hide suggested/promoted posts from your feed.",
   },
   {
     id: "sidebar",
@@ -165,6 +165,7 @@ export function App({ store, version, beta, initialTab = "feed" }: AppProps) {
               "Dim filtered content instead of removing it.",
             )}
             <BackupSection
+              confirmRestore
               extensionId="cleanin"
               extensionName="CleanIn"
               extensionVersion={extensionVersion}

@@ -20,20 +20,8 @@
   --extension-ui-nav-surface: #e9f3ff;
   --extension-ui-font: "CleanIn UI", system-ui, sans-serif;
   --extension-ui-heading-font: "CleanIn UI", system-ui, sans-serif;
-}
-.cleanin-shell .brand-wordmark {
-  min-width: 0;
-}
-.cleanin-shell .brand-wordmark strong {
-  font-family: "CleanIn Logo", Georgia, serif;
-  letter-spacing: -0.02em;
-}
-.cleanin-shell .brand-wordmark span {
-  font-size: 11px;
-  line-height: 15px;
-}
-.cleanin-shell .preferences-tab {
-  font-family: "CleanIn UI", system-ui, sans-serif;
+  --extension-ui-wordmark-font: "CleanIn Logo", Georgia, serif;
+  --extension-ui-wordmark-tracking: -0.02em;
 }
 .cleanin-setting {
   padding: 12px 0;
