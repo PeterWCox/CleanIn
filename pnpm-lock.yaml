@@ -167,8 +167,8 @@ importers:
   .:
     dependencies:
       '@petercoxhatesbridges/extension-ui':
-        specifier: file:vendor/petercoxhatesbridges-extension-ui-0.2.8.tgz
-        version: file:vendor/petercoxhatesbridges-extension-ui-0.2.8.tgz(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        specifier: file:vendor/petercoxhatesbridges-extension-ui-0.2.9.tgz
+        version: file:vendor/petercoxhatesbridges-extension-ui-0.2.9.tgz(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       lucide-react:
         specifier: ^1.31.0
         version: 1.62.0(@types/react@19.3.0)(react@19.3.1)
@@ -784,9 +784,9 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@petercoxhatesbridges/extension-ui@file:vendor/petercoxhatesbridges-extension-ui-0.2.8.tgz':
-    resolution: {integrity: sha512-e6odut/DBb+n0J8aAg2iQA1c3HVvtkZz6aVLHD81MhRrxP4pKxlHlcc3sjXvr375DUlFFLBT+BUn0sVmgkmbSA==, tarball: file:vendor/petercoxhatesbridges-extension-ui-0.2.8.tgz}
-    version: 0.2.8
+  '@petercoxhatesbridges/extension-ui@file:vendor/petercoxhatesbridges-extension-ui-0.2.9.tgz':
+    resolution: {integrity: sha512-1Fj2dh9W/V8M6LFi+ItPCr1bH75/DjgMPRk6fv4x6YF+fBtwwKwjbOri3+kDM2bA6Gn2igtMB759ckUy+YRRAw==, tarball: file:vendor/petercoxhatesbridges-extension-ui-0.2.9.tgz}
+    version: 0.2.9
     peerDependencies:
       react: ^19.0.0
       react-dom: ^19.0.0
@@ -2448,7 +2448,7 @@ snapshots:
   '@oxc-resolver/binding-win32-x64-msvc@11.21.2':
     optional: true
 
-  '@petercoxhatesbridges/extension-ui@file:vendor/petercoxhatesbridges-extension-ui-0.2.8.tgz(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+  '@petercoxhatesbridges/extension-ui@file:vendor/petercoxhatesbridges-extension-ui-0.2.9.tgz(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       '@radix-ui/react-tabs': 1.2.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react: 19.3.1
