@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 11016 --strictPort",
-    "dev:extension": "vite build --watch --clearScreen false",
+    "dev:extension": "bun run dev/watch-extension.mjs",
     "build": "vite build",
     "test": "bun test tests/background.test.cjs && vitest run --project unit",
     "typecheck": "tsc --noEmit",
