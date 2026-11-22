@@ -13,9 +13,11 @@ function loadWorker({
   lookupError = false,
   contentScriptPresent = true,
   storageError = false,
+  existingSettings = {},
 } = {}) {
   const listeners = {};
   const calls = { get: 0, ping: [], inject: [], settings: [] };
+  let stored = existingSettings;
   const event = (name) => ({
     addListener: (listener) => {
       listeners[name] = listener;
@@ -31,8 +33,12 @@ function loadWorker({
     storage: {
       sync: {
         remove() {},
+        get(defaults, callback) {
+          callback({ ...defaults, ...stored });
+        },
         set(settings, callback) {
           calls.settings.push(settings);
+          if (!storageError) stored = { ...stored, ...settings };
           chrome.runtime.lastError = storageError
             ? { message: "Quota exceeded" }
             : undefined;
@@ -187,5 +193,45 @@ test("failed settings saves report errors without notifying content scripts", ()
   );
   assert.equal(response.ok, false);
   assert.equal(response.error, "Quota exceeded");
+  assert.equal(calls.ping.length, 0);
+});
+
+test("filter actions survive storage reload and reach the content script", () => {
+  const { listeners, calls } = loadWorker({
+    existingSettings: { transparentMode: true },
+  });
+  const filterActions = { hideSuggested: "fade", hidePuzzles: "show" };
+  listeners.message(
+    { type: "UPDATE_SETTINGS", settings: { filterActions } },
+    null,
+    (response) => {
+      assert.equal(response.ok, true);
+    },
+  );
+  assert.deepEqual(calls.settings[0].filterActions, filterActions);
+  assert.deepEqual(calls.ping[0].message.settings.filterActions, filterActions);
+  assert.equal(calls.ping[0].message.settings.transparentMode, true);
+  listeners.message({ type: "GET_SETTINGS" }, null, ({ settings }) => {
+    assert.deepEqual(settings.filterActions, filterActions);
+  });
+});
+
+test("invalid filter actions are rejected before writing storage", () => {
+  const { listeners, calls } = loadWorker();
+  for (const filterActions of [
+    { hideSuggested: "unknown" },
+    { transparentMode: "hide" },
+    [],
+    null,
+  ]) {
+    listeners.message(
+      { type: "UPDATE_SETTINGS", settings: { filterActions } },
+      null,
+      (response) => {
+        assert.equal(response.ok, false);
+      },
+    );
+  }
+  assert.equal(calls.settings.length, 0);
   assert.equal(calls.ping.length, 0);
 });

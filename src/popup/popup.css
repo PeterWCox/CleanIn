@@ -37,3 +37,8 @@
 .cleanin-error {
   margin-top: 12px;
 }
+
+.cleanin-setting .ext-filter-action-field {
+  padding: 0;
+  border: 0;
+}

@@ -2,16 +2,26 @@ globalThis.CleanInFeatures = globalThis.CleanInFeatures || {};
 
 globalThis.CleanInFeatures.hideSidebar = globalThis.CleanInFeatures.hideSidebar || (() => {
   const ROOT_SELECTOR = 'aside, [role="complementary"], .scaffold-layout__aside';
+  const WIDGET_CONTENT = 'iframe, a[href*="/news/story/"], a[href*="/games/"]';
   const MAX_WIDTH = 420;
   const MAX_HEIGHT = 900;
-  const FILTER_KEYS = new Set(['suggested', 'promoted', 'promoted-by']);
+  const FILTER_KEYS = {
+    suggested: 'hideSuggested',
+    promoted: 'hidePromoted',
+    'promoted-by': 'hidePromotedBy',
+    news: 'hideLinkedInNews',
+    puzzles: 'hidePuzzles',
+    ad: 'hideSidebarAds',
+  };
+  const CARD_KEYS = new Set(['suggested', 'promoted', 'promoted-by']);
   const pollTimers = new Set();
+  let currentSettings;
 
   function start(settings) {
     stop();
     apply(settings);
-    waitForWidget('LinkedIn News', 'a[href*="/news/story/"]', 'news', settings);
-    waitForWidget("Today\u2019s puzzles", 'a[href*="/games/"]', 'puzzles', settings);
+    waitForWidget('LinkedIn News', 'a[href*="/news/story/"]', 'news');
+    waitForWidget("Today\u2019s puzzles", 'a[href*="/games/"]', 'puzzles');
   }
 
   function stop() {
@@ -20,6 +30,7 @@ globalThis.CleanInFeatures.hideSidebar = globalThis.CleanInFeatures.hideSidebar 
   }
 
   function apply(settings) {
+    currentSettings = settings;
     syncExisting(settings);
     const news = findWidget('LinkedIn News', 'a[href*="/news/story/"]');
     const puzzles = findWidget("Today\u2019s puzzles", 'a[href*="/games/"]');
@@ -29,7 +40,7 @@ globalThis.CleanInFeatures.hideSidebar = globalThis.CleanInFeatures.hideSidebar 
     applyCards(settings);
   }
 
-  function waitForWidget(label, selector, key, settings) {
+  function waitForWidget(label, selector, key) {
     const timer = setInterval(() => {
       if (!isFeedPage()) {
         clearInterval(timer);
@@ -40,7 +51,7 @@ globalThis.CleanInFeatures.hideSidebar = globalThis.CleanInFeatures.hideSidebar 
       if (!widget) return;
       clearInterval(timer);
       pollTimers.delete(timer);
-      applyWidget(widget, key, settings);
+      applyWidget(widget, key, currentSettings);
     }, 500);
     pollTimers.add(timer);
   }
@@ -82,27 +93,20 @@ globalThis.CleanInFeatures.hideSidebar = globalThis.CleanInFeatures.hideSidebar 
   }
 
   function applyWidget(widget, key, settings) {
-    const card = cardContainer(widget);
-    const shouldHide = (key === 'news' && settings.hideLinkedInNews) || (key === 'puzzles' && settings.hidePuzzles) || (key === 'ad' && settings.hideSidebarAds);
-    if (shouldHide) {
-      card.dataset.lfrHidden = key;
-      style(card, key, settings);
-    } else if (card.dataset.lfrHidden === key) {
-      clear(card);
-    }
+    applyCard(cardContainer(widget, true), key, settings);
   }
 
   function applyAds(settings) {
     const active = new Set();
     roots().flatMap((root) => [...root.querySelectorAll('iframe')].filter(isVisibleElement)).forEach((frame) => {
-      const card = cardContainer(frame);
+      const card = cardContainer(frame, true);
       if (!card || !reasonable(card)) return;
       active.add(card);
-      applyWidget(frame, 'ad', settings);
+      applyCard(card, 'ad', settings);
     });
     document.querySelectorAll('[data-lfr-hidden="ad"]').forEach((card) => {
       if (!card.closest(ROOT_SELECTOR) || active.has(card)) return;
-      if (card.querySelector('iframe') && settings.hideSidebarAds) style(card, 'ad', settings);
+      if (card.querySelector('iframe')) applyCard(card, 'ad', settings);
       else clear(card);
     });
   }
@@ -112,21 +116,16 @@ globalThis.CleanInFeatures.hideSidebar = globalThis.CleanInFeatures.hideSidebar 
     cards().forEach((card) => {
       const key = filterKey(card);
       if (!key) {
-        if (FILTER_KEYS.has(card.dataset.lfrHidden)) clear(card);
+        if (CARD_KEYS.has(card.dataset.lfrHidden)) clear(card);
         return;
       }
-      const shouldHide = (key === 'suggested' && settings.hideSuggested) || (key === 'promoted' && settings.hidePromoted) || (key === 'promoted-by' && settings.hidePromotedBy);
-      if (shouldHide) {
-        active.add(card);
-        card.dataset.lfrHidden = key;
-        style(card, key, settings);
-      } else if (card.dataset.lfrHidden === key) clear(card);
+      active.add(card);
+      applyCard(card, key, settings);
     });
     document.querySelectorAll('[data-lfr-hidden="suggested"], [data-lfr-hidden="promoted"], [data-lfr-hidden="promoted-by"]').forEach((card) => {
       if (!card.closest(ROOT_SELECTOR) || active.has(card)) return;
       const key = filterKey(card);
-      const shouldHide = key && ((key === 'suggested' && settings.hideSuggested) || (key === 'promoted' && settings.hidePromoted) || (key === 'promoted-by' && settings.hidePromotedBy));
-      if (shouldHide) style(card, key, settings);
+      if (key) applyCard(card, key, settings);
       else clear(card);
     });
   }
@@ -158,7 +157,7 @@ globalThis.CleanInFeatures.hideSidebar = globalThis.CleanInFeatures.hideSidebar 
     });
   }
 
-  function cardContainer(element) {
+  function cardContainer(element, widget = false) {
     const root = element.closest(ROOT_SELECTOR);
     let current = element;
     let best = element;
@@ -166,6 +165,7 @@ globalThis.CleanInFeatures.hideSidebar = globalThis.CleanInFeatures.hideSidebar 
       if (reasonable(current)) best = current;
       const parent = current.parentElement;
       if (!parent || parent === root || !reasonable(parent)) break;
+      if (widget && [...parent.querySelectorAll(WIDGET_CONTENT)].some((content) => !current.contains(content))) break;
       current = parent;
     }
     return best;
@@ -174,23 +174,29 @@ globalThis.CleanInFeatures.hideSidebar = globalThis.CleanInFeatures.hideSidebar 
   function syncExisting(settings) {
     document.querySelectorAll('[data-lfr-hidden="news"], [data-lfr-hidden="puzzles"], [data-lfr-hidden="ad"], [data-lfr-hidden="suggested"], [data-lfr-hidden="promoted"], [data-lfr-hidden="promoted-by"]').forEach((card) => {
       if (!card.closest(ROOT_SELECTOR)) return;
-      const key = card.dataset.lfrHidden;
-      const keep = (key === 'news' && settings.hideLinkedInNews) || (key === 'puzzles' && settings.hidePuzzles) || (key === 'ad' && settings.hideSidebarAds) || (key === 'suggested' && settings.hideSuggested) || (key === 'promoted' && settings.hidePromoted) || (key === 'promoted-by' && settings.hidePromotedBy);
-      if (keep) style(card, key, settings);
-      else clear(card);
+      applyCard(card, card.dataset.lfrHidden, settings);
     });
   }
 
-  function style(element, key, settings) {
-    if (key === 'ad' && !settings.transparentMode) {
-      clearFilteredElementStyle(element);
+  function applyCard(element, key, settings) {
+    const action = CleanInFeatures.getFilterAction(settings, FILTER_KEYS[key]);
+    if (action === 'show') {
+      if (element.dataset.lfrHidden === key || CARD_KEYS.has(element.dataset.lfrHidden) && CARD_KEYS.has(key)) clear(element);
+      return;
+    }
+    element.dataset.lfrHidden = key;
+    style(element, key, action);
+  }
+
+  function style(element, key, action) {
+    clearFilteredElementStyle(element);
+    if (key === 'ad' && action === 'hide') {
       element.style.opacity = '0';
       element.style.visibility = 'hidden';
       element.style.pointerEvents = 'none';
       return;
     }
-    if (!settings.transparentMode) {
-      clearFilteredElementStyle(element);
+    if (action === 'hide') {
       element.style.display = 'none';
       return;
     }
@@ -202,12 +208,9 @@ globalThis.CleanInFeatures.hideSidebar = globalThis.CleanInFeatures.hideSidebar 
       puzzles: ['2px solid rgba(204, 122, 0, 0.4)', 'rgba(204, 122, 0, 0.06)'],
       ad: ['2px solid rgba(220, 0, 0, 0.4)', 'rgba(220, 0, 0, 0.06)'],
     }[key];
-    element.style.display = 'block';
     element.style.opacity = '0.4';
-    element.style.visibility = '';
     element.style.outline = colors[0];
     element.style.backgroundColor = colors[1];
-    element.style.pointerEvents = '';
   }
 
   function clear(element) {

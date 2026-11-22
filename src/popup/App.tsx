@@ -4,15 +4,29 @@ import {
   Button,
   ExtensionShell,
   SettingsSection,
-  SettingsRow,
-  Switch,
+  FilterActionField,
   TabsContent,
 } from "@petercoxhatesbridges/extension-ui";
-import { House, PanelsTopLeft, Settings as SettingsIcon } from "lucide-react";
+import {
+  House,
+  PanelsTopLeft,
+  Settings as SettingsIcon,
+  Sparkles,
+  Megaphone,
+  BriefcaseBusiness,
+  Image,
+  Video,
+  Newspaper,
+  Puzzle,
+  PanelRight,
+} from "lucide-react";
 import {
   createSettingsStore,
   SettingsController,
-  type Settings,
+  getFilterAction,
+  actionPatch,
+  type FilterKey,
+  type FilterAction,
   type SettingsStore,
 } from "./settings";
 import "./popup.css";
@@ -36,7 +50,7 @@ const tabs = [
     id: "settings",
     label: "Settings",
     icon: <SettingsIcon aria-hidden="true" />,
-    description: "Choose how filtered content appears.",
+    description: "Back up and restore your preferences.",
     secondary: true,
   },
 ] as const;
@@ -65,25 +79,35 @@ export function App({ store, version, beta, initialTab = "feed" }: AppProps) {
       : __CLEANIN_VERSION__);
   const localBuild =
     beta ?? (typeof __CLEANIN_BETA__ !== "undefined" && __CLEANIN_BETA__);
-  const toggle = (key: keyof Settings, checked: boolean) => {
-    void controller.update({ [key]: checked });
-  };
   const row = (
     label: string,
-    checked: boolean,
-    onChange: (checked: boolean) => void,
-    help?: string,
-  ) => (
-    <SettingsSection className="cleanin-setting">
-      <SettingsRow label={label} description={help}>
-        <Switch
-          checked={checked}
-          onCheckedChange={onChange}
-          aria-label={label}
+    key: FilterKey,
+    icon: React.ReactNode,
+    keys: readonly FilterKey[] = [key],
+  ) => {
+    const value =
+      keys
+        .map((key) => getFilterAction(state.settings, key))
+        .find((action) => action !== "show") ?? "show";
+    return (
+      <SettingsSection className="cleanin-setting">
+        <FilterActionField
+          label={label}
+          subject={label}
+          context={
+            activeTab === "sidebar"
+              ? "your LinkedIn sidebar"
+              : "your LinkedIn feed"
+          }
+          icon={icon}
+          value={value}
+          onChange={(action: FilterAction) =>
+            void controller.update(actionPatch(state.settings, keys, action))
+          }
         />
-      </SettingsRow>
-    </SettingsSection>
-  );
+      </SettingsSection>
+    );
+  };
   return (
     <ExtensionShell
       className="cleanin-shell"
@@ -119,51 +143,25 @@ export function App({ store, version, beta, initialTab = "feed" }: AppProps) {
       ) : (
         <>
           <TabsContent value="feed">
+            {row("Suggested posts", "hideSuggested", <Sparkles />)}
+            {row("Promoted posts", "hidePromoted", <Megaphone />, [
+              "hidePromoted",
+              "hidePromotedBy",
+            ])}
             {row(
-              "Hide suggested posts",
-              state.settings.hideSuggested,
-              (checked) => toggle("hideSuggested", checked),
+              "New position images",
+              "hideNewPositionPosts",
+              <BriefcaseBusiness />,
             )}
-            {row(
-              "Hide promoted posts",
-              state.settings.hidePromoted || state.settings.hidePromotedBy,
-              (checked) => {
-                void controller.update({
-                  hidePromoted: checked,
-                  hidePromotedBy: checked,
-                });
-              },
-            )}
-            {row(
-              "Hide new position images",
-              state.settings.hideNewPositionPosts,
-              (checked) => toggle("hideNewPositionPosts", checked),
-            )}
-            {row("Hide photos", state.settings.hidePhotos, (checked) =>
-              toggle("hidePhotos", checked),
-            )}
-            {row("Hide videos", state.settings.hideVideos, (checked) =>
-              toggle("hideVideos", checked),
-            )}
+            {row("Photos", "hidePhotos", <Image />)}
+            {row("Videos", "hideVideos", <Video />)}
           </TabsContent>
           <TabsContent value="sidebar">
-            {row("Hide news", state.settings.hideLinkedInNews, (checked) =>
-              toggle("hideLinkedInNews", checked),
-            )}
-            {row("Hide puzzles", state.settings.hidePuzzles, (checked) =>
-              toggle("hidePuzzles", checked),
-            )}
-            {row("Hide sidebar ads", state.settings.hideSidebarAds, (checked) =>
-              toggle("hideSidebarAds", checked),
-            )}
+            {row("News", "hideLinkedInNews", <Newspaper />)}
+            {row("Puzzles", "hidePuzzles", <Puzzle />)}
+            {row("Sidebar ads", "hideSidebarAds", <PanelRight />)}
           </TabsContent>
           <TabsContent value="settings">
-            {row(
-              "Show hidden content as transparent",
-              state.settings.transparentMode,
-              (checked) => toggle("transparentMode", checked),
-              "Dim filtered content instead of removing it.",
-            )}
             <BackupSection
               confirmRestore
               extensionId="cleanin"

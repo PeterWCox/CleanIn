@@ -1,4 +1,4 @@
-export const defaultSettings = {
+const filterDefaults = {
   hideSuggested: true,
   hideNewPositionPosts: true,
   hidePromoted: true,
@@ -8,16 +8,68 @@ export const defaultSettings = {
   hideLinkedInNews: true,
   hidePuzzles: true,
   hideSidebarAds: true,
+};
+export type FilterKey = keyof typeof filterDefaults;
+export type FilterAction = "show" | "fade" | "hide";
+type FilterActions = Partial<Record<FilterKey, FilterAction>>;
+
+export const defaultSettings = {
+  ...filterDefaults,
   transparentMode: false,
+  filterActions: {} as FilterActions,
 };
 export type Settings = typeof defaultSettings;
+
+function isFilterAction(value: unknown): value is FilterAction {
+  return value === "show" || value === "fade" || value === "hide";
+}
+
+function isActionMap(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+const filterKeys = Object.keys(filterDefaults) as FilterKey[];
+
 export function readSettings(raw: Record<string, unknown>): Settings {
-  return Object.fromEntries(
-    Object.entries(defaultSettings).map(([key, fallback]) => [
-      key,
-      typeof raw[key] === "boolean" ? raw[key] : fallback,
-    ]),
-  ) as Settings;
+  const settings: Settings = { ...defaultSettings, filterActions: {} };
+  const actions = isActionMap(raw.filterActions) ? raw.filterActions : {};
+  for (const key of filterKeys) {
+    if (typeof raw[key] === "boolean") settings[key] = raw[key];
+    if (isFilterAction(actions[key]))
+      settings.filterActions[key] = actions[key];
+  }
+  if (typeof raw.transparentMode === "boolean")
+    settings.transparentMode = raw.transparentMode;
+  return settings;
+}
+
+export function getFilterAction(
+  settings: Settings,
+  key: FilterKey,
+): FilterAction {
+  const override = settings.filterActions[key];
+  if (override) return override;
+  if (!settings[key]) return "show";
+  // Legacy transparent mode only applied to cards, leaving attachments collapsed.
+  const attachment =
+    key === "hidePhotos" ||
+    key === "hideVideos" ||
+    key === "hideNewPositionPosts";
+  return settings.transparentMode && !attachment ? "fade" : "hide";
+}
+
+export function actionPatch(
+  settings: Settings,
+  key: FilterKey | readonly FilterKey[],
+  action: FilterAction,
+): Partial<Settings> {
+  const filterActions = { ...settings.filterActions };
+  const patch: Partial<Settings> = { filterActions };
+  for (const filter of typeof key === "string" ? [key] : key) {
+    patch[filter] = action !== "show";
+    filterActions[filter] = action;
+  }
+  return patch;
 }
 export interface SettingsStore {
   read(): Promise<Settings>;
@@ -161,16 +213,31 @@ export class SettingsController {
     const entries = Object.entries(data);
     if (
       !entries.length ||
-      entries.some(
-        ([key, value]) =>
-          !Object.hasOwn(defaultSettings, key) || typeof value !== "boolean",
-      )
+      entries.some(([key, value]) => {
+        if (key === "filterActions") {
+          return (
+            !isActionMap(value) ||
+            Object.entries(value).some(
+              ([filter, action]) =>
+                !Object.hasOwn(filterDefaults, filter) ||
+                !isFilterAction(action),
+            )
+          );
+        }
+        return (
+          !Object.hasOwn(defaultSettings, key) || typeof value !== "boolean"
+        );
+      })
     )
       throw new Error("Backup contains invalid or unsupported settings.");
     await this.flush(true);
-    // Merge partial backups with the latest persisted values, retaining both promoted flags.
     const current = await this.store.read();
-    await this.update({ ...current, ...data } as Settings);
+    const filterActions = { ...current.filterActions };
+    // Legacy backups replace the settings they include, including their action overrides.
+    for (const key of filterKeys) {
+      if (Object.hasOwn(data, key)) delete filterActions[key];
+    }
+    await this.update(readSettings({ ...current, filterActions, ...data }));
     await this.flush();
   };
   update = (patch: Partial<Settings>) => {

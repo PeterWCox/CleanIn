@@ -4,6 +4,8 @@ import {
   defaultSettings,
   readSettings,
   createSettingsStore,
+  actionPatch,
+  getFilterAction,
   type Settings,
   type SettingsStore,
 } from "../src/popup/settings";
@@ -52,6 +54,60 @@ describe("preferences persistence", () => {
     expect(controller.getSnapshot().settings.hideSuggested).toBe(false);
     expect(controller.getSnapshot().settings.transparentMode).toBe(true);
     expect(store.save).not.toHaveBeenCalled();
+  });
+  it("interprets legacy fades without changing attachment or disabled filter behavior", () => {
+    const settings = readSettings({
+      transparentMode: true,
+      hidePhotos: true,
+      hidePromotedBy: false,
+      filterActions: {
+        hidePromoted: "unknown",
+        hidePuzzles: "hide",
+        unknown: "fade",
+      },
+    });
+    expect(getFilterAction(settings, "hideSuggested")).toBe("fade");
+    expect(getFilterAction(settings, "hidePromoted")).toBe("fade");
+    expect(getFilterAction(settings, "hidePromotedBy")).toBe("show");
+    expect(getFilterAction(settings, "hidePhotos")).toBe("hide");
+    expect(getFilterAction(settings, "hideNewPositionPosts")).toBe("hide");
+    expect(getFilterAction(settings, "hidePuzzles")).toBe("hide");
+    expect(settings.filterActions).toEqual({ hidePuzzles: "hide" });
+  });
+  it("saves independent actions and restores them from a backup", async () => {
+    const { controller, store } = fixture({ transparentMode: true });
+    await controller.load();
+    await controller.update(
+      actionPatch(controller.getSnapshot().settings, "hideSuggested", "hide"),
+    );
+    await controller.update(
+      actionPatch(
+        controller.getSnapshot().settings,
+        ["hidePromoted", "hidePromotedBy"],
+        "show",
+      ),
+    );
+    await controller.update(
+      actionPatch(controller.getSnapshot().settings, "hideVideos", "fade"),
+    );
+    const backup = await controller.exportData();
+    await controller.importData({ hideSuggested: false });
+    expect(getFilterAction(await store.read(), "hideSuggested")).toBe("show");
+    expect(getFilterAction(await store.read(), "hideVideos")).toBe("fade");
+    await controller.importData(backup);
+    expect(await store.read()).toEqual(backup);
+    expect(backup).toMatchObject({
+      hideSuggested: true,
+      hidePromoted: false,
+      hidePromotedBy: false,
+      hideVideos: true,
+      filterActions: {
+        hideSuggested: "hide",
+        hidePromoted: "show",
+        hidePromotedBy: "show",
+        hideVideos: "fade",
+      },
+    });
   });
   it("queues rapid changes so an older write cannot overwrite a newer one", async () => {
     const { controller, store } = fixture();
@@ -146,7 +202,7 @@ describe("preferences persistence", () => {
     expect(await store.read()).toEqual(backup);
     expect(controller.getSnapshot().settings).toEqual(backup);
   });
-  it("rejects empty, unknown and non-boolean settings before writing", async () => {
+  it("rejects empty, unknown and invalid settings before writing", async () => {
     const { controller, store } = fixture();
     await controller.load();
     for (const data of [
@@ -154,6 +210,10 @@ describe("preferences persistence", () => {
       { unknown: true },
       { hidePuzzles: "false" },
       { hidePuzzles: false, extra: true },
+      { filterActions: null },
+      { filterActions: [] },
+      { filterActions: { unknown: "fade" } },
+      { filterActions: { hidePuzzles: "remove" } },
     ]) {
       await expect(controller.importData(data)).rejects.toThrow(
         "invalid or unsupported",

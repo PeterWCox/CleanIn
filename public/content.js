@@ -14,6 +14,7 @@ const defaultSettings = {
   hidePuzzles: true,
   hideSidebarAds: true,
   transparentMode: false,
+  filterActions: {},
 };
 
 let currentSettings = { ...defaultSettings };

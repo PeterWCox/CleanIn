@@ -24,22 +24,20 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 export const Feed: Story = {
   play: async ({ canvas, userEvent }) => {
-    await expect(
-      await canvas.findByRole("switch", { name: "Hide suggested posts" }),
-    ).toHaveAttribute("aria-checked", "true");
-    const photos = canvas.getByRole("switch", { name: "Hide photos" });
-    const videos = canvas.getByRole("switch", { name: "Hide videos" });
-    await expect(photos).toHaveAttribute("aria-checked", "false");
-    await expect(videos).toHaveAttribute("aria-checked", "false");
-    await userEvent.click(photos);
-    await expect(photos).toHaveAttribute("aria-checked", "true");
-    await expect(videos).toHaveAttribute("aria-checked", "false");
-    await userEvent.click(videos);
-    await expect(videos).toHaveAttribute("aria-checked", "true");
-    await userEvent.click(photos);
-    await expect(photos).toHaveAttribute("aria-checked", "false");
-    await expect(videos).toHaveAttribute("aria-checked", "true");
-    await userEvent.click(videos);
+    const suggested = await canvas.findByRole("combobox", {
+      name: "Suggested posts",
+    });
+    const photos = canvas.getByRole("combobox", { name: "Photos" });
+    await expect(suggested).toHaveValue("hide");
+    await expect(photos).toHaveValue("show");
+    await userEvent.selectOptions(suggested, "fade");
+    await expect(suggested).toHaveValue("fade");
+    await expect(photos).toHaveValue("show");
+    await userEvent.selectOptions(photos, "hide");
+    await expect(photos).toHaveValue("hide");
+    await expect(suggested).toHaveValue("fade");
+    await userEvent.selectOptions(photos, "show");
+    await userEvent.selectOptions(suggested, "hide");
   },
 };
 export const Sidebar: Story = { args: { initialTab: "sidebar" } };
@@ -59,8 +57,9 @@ export const LoadError: Story = { args: { scenario: "load-error" } };
 export const SaveError: Story = {
   args: { scenario: "save-error" },
   play: async ({ canvas, userEvent }) => {
-    await userEvent.click(
-      await canvas.findByRole("switch", { name: "Hide suggested posts" }),
+    await userEvent.selectOptions(
+      await canvas.findByRole("combobox", { name: "Suggested posts" }),
+      "show",
     );
     await expect(
       await canvas.findByRole("button", { name: "Retry saving preferences" }),
@@ -69,23 +68,25 @@ export const SaveError: Story = {
 };
 export const Saved: Story = {
   play: async ({ canvas, userEvent }) => {
-    await userEvent.click(
-      await canvas.findByRole("switch", { name: "Hide suggested posts" }),
+    await userEvent.selectOptions(
+      await canvas.findByRole("combobox", { name: "Suggested posts" }),
+      "show",
     );
     await expect(await canvas.findByText("Saved")).toBeVisible();
     await userEvent.click(canvas.getByRole("tab", { name: "Sidebar" }));
     await expect(
-      await canvas.findByRole("switch", { name: "Hide news" }),
-    ).toHaveAttribute("aria-checked", "true");
+      await canvas.findByRole("combobox", { name: "News" }),
+    ).toHaveValue("hide");
   },
 };
 export const CssCheck: Story = {
   play: async ({ canvas }) => {
-    const control = await canvas.findByRole("switch", {
-      name: "Hide suggested posts",
+    const control = await canvas.findByRole("combobox", {
+      name: "Suggested posts",
     });
-    await expect(getComputedStyle(control).backgroundColor).toBe(
-      "rgb(10, 102, 194)",
-    );
+    await expect(control).toBeVisible();
+    await expect(
+      canvas.getByRole("button", { name: "About Suggested posts filter" }),
+    ).toBeVisible();
   },
 };

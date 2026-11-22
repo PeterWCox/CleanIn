@@ -22,15 +22,21 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message.type === "UPDATE_SETTINGS") {
-    chrome.storage.sync.set(message.settings, () => {
+    const { settings } = message;
+    if (!validSettingsPatch(settings)) {
+      sendResponse({ ok: false, error: "Invalid preferences" });
+      return;
+    }
+    chrome.storage.sync.set(settings, () => {
       const error = chrome.runtime.lastError;
       if (error) {
         sendResponse({ ok: false, error: error.message || "Could not save preferences" });
         return;
       }
-      // Notify content scripts on LinkedIn tabs to re-apply filters
-      notifyLinkedInTabs(message.settings);
-      sendResponse({ ok: true });
+      chrome.storage.sync.get(defaultSettings, (saved) => {
+        if (!chrome.runtime.lastError) notifyLinkedInTabs(saved);
+        sendResponse({ ok: true });
+      });
     });
     return true;
   }
@@ -121,4 +127,16 @@ const defaultSettings = {
   hidePuzzles: true,
   hideSidebarAds: true,
   transparentMode: false,
+  filterActions: {},
 };
+
+function validSettingsPatch(settings) {
+  if (!settings || typeof settings !== 'object' || Array.isArray(settings)) return false;
+  return Object.entries(settings).every(([key, value]) => {
+    if (key !== 'filterActions') return Object.hasOwn(defaultSettings, key) && typeof value === 'boolean';
+    return value && typeof value === 'object' && !Array.isArray(value) &&
+      Object.entries(value).every(([filter, action]) =>
+        filter !== 'transparentMode' && typeof defaultSettings[filter] === 'boolean' &&
+        ['show', 'fade', 'hide'].includes(action));
+  });
+}

@@ -1,4 +1,11 @@
 globalThis.CleanInFeatures = globalThis.CleanInFeatures || {};
+globalThis.CleanInFeatures.getFilterAction = globalThis.CleanInFeatures.getFilterAction || ((settings, key, fadeInTransparentMode = true) => {
+  if (!key) return 'show';
+  const override = settings.filterActions?.[key];
+  if (override === 'show' || override === 'fade' || override === 'hide') return override;
+  if (!settings[key]) return 'show';
+  return settings.transparentMode && fadeInTransparentMode ? 'fade' : 'hide';
+});
 
 globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (() => {
   const FILTER_STYLES = {
@@ -6,7 +13,11 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
     promoted: ['2px solid rgba(220, 0, 0, 0.4)', 'rgba(220, 0, 0, 0.06)'],
     'promoted-by': ['2px solid rgba(128, 0, 255, 0.4)', 'rgba(128, 0, 255, 0.06)'],
   };
-  const FILTER_KEYS = new Set(['suggested', 'promoted', 'promoted-by']);
+  const FILTER_KEYS = {
+    suggested: 'hideSuggested',
+    promoted: 'hidePromoted',
+    'promoted-by': 'hidePromotedBy',
+  };
   const FADE_DURATION = 220;
   const FEED_POST = ':is([data-component-type="LazyColumn"] > *, main article, [role="main"] article, .feed-shared-update-v2, .occludable-update, [data-activity-urn], [data-id*="urn:li:activity"], [data-urn*="urn:li:activity"])';
   const PHOTO_IMAGE = `:is(${[
@@ -28,24 +39,31 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   const MEDIA = `${PHOTO}, ${VIDEO}, ${PHOTO_TILE}, ${PLAY_VIDEO}, ${CELEBRATION_IMAGE}, ${MORE_PHOTOS_LABEL}, ${DOCUMENT_SLIDE}, ${EVENT_COVER}`;
   const MARKER = 'data-cleanin-media-marker';
   const HIDDEN_MEDIA = 'data-cleanin-hidden-media';
+  const FADED_MEDIA = 'data-cleanin-faded-media';
   const markers = new Map();
+  const fadedMedia = new Set();
+  const postAnimations = new WeakMap();
   let mediaObserver;
   let mediaFrame = null;
-  let filterPhotos = false;
-  let filterVideos = false;
-  let filterNewPositionImages = false;
+  let photoAction = 'show';
+  let videoAction = 'show';
+  let newPositionAction = 'show';
 
-  function applyMediaFilters({ hidePhotos = false, hideVideos = false, hideNewPositionPosts = false }) {
-    if (hidePhotos === filterPhotos && hideVideos === filterVideos && hideNewPositionPosts === filterNewPositionImages) return;
-    filterPhotos = hidePhotos;
-    filterVideos = hideVideos;
-    filterNewPositionImages = hideNewPositionPosts;
+  function applyMediaFilters(settings) {
+    const photos = CleanInFeatures.getFilterAction(settings, 'hidePhotos', false);
+    const videos = CleanInFeatures.getFilterAction(settings, 'hideVideos', false);
+    const newPositions = CleanInFeatures.getFilterAction(settings, 'hideNewPositionPosts', false);
+    if (photos === photoAction && videos === videoAction && newPositions === newPositionAction) return;
+    photoAction = photos;
+    videoAction = videos;
+    newPositionAction = newPositions;
 
-    if (hidePhotos || hideVideos || hideNewPositionPosts) {
+    if ([photos, videos, newPositions].some((action) => action !== 'show')) {
       if (!mediaObserver) {
         const sheet = new CSSStyleSheet();
         sheet.replaceSync(`
           [${HIDDEN_MEDIA}] { display: none !important; }
+          [${FADED_MEDIA}] { opacity: 0.4 !important; }
           [${MARKER}] {
             display: inline-grid;
             place-items: center;
@@ -101,24 +119,35 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   }
 
   function updateMediaMarkers() {
-    const hidden = new Map();
-    if (filterVideos) collectMedia(VIDEO, 'video', hidden);
-    if (filterPhotos) {
-      collectDocumentPreviews(hidden);
-      collectPhotoGrids(hidden);
-      collectMedia(PHOTO, 'photo', hidden);
-      collectMedia(`:is(figure:has(> ${EVENT_COVER}), ${EVENT_COVER})`, 'photo', hidden);
+    const filtered = new Map();
+    if (videoAction !== 'show') collectMedia(VIDEO, 'video', videoAction, filtered);
+    if (photoAction !== 'show') {
+      collectDocumentPreviews(filtered);
+      collectPhotoGrids(filtered);
+      collectMedia(PHOTO, 'photo', photoAction, filtered);
+      collectMedia(`:is(figure:has(> ${EVENT_COVER}), ${EVENT_COVER})`, 'photo', photoAction, filtered);
     }
-    if (filterNewPositionImages) collectNewPositionImages(hidden);
+    if (newPositionAction !== 'show') collectNewPositionImages(filtered);
+
+    for (const media of fadedMedia) {
+      if (filtered.get(media)?.action === 'fade') continue;
+      media.removeAttribute(FADED_MEDIA);
+      fadedMedia.delete(media);
+    }
 
     for (const [media, marker] of markers) {
-      if (hidden.has(media) && marker.nextSibling === media) continue;
+      if (filtered.get(media)?.action === 'hide' && marker.nextSibling === media) continue;
       marker.remove();
       media.removeAttribute(HIDDEN_MEDIA);
       markers.delete(media);
     }
 
-    for (const [media, label] of hidden) {
+    for (const [media, { label, action }] of filtered) {
+      if (action === 'fade') {
+        media.setAttribute(FADED_MEDIA, '');
+        fadedMedia.add(media);
+        continue;
+      }
       if (markers.has(media)) continue;
       const marker = document.createElement('button');
       marker.type = 'button';
@@ -142,28 +171,28 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
     }
   }
 
-  function collectDocumentPreviews(hidden) {
+  function collectDocumentPreviews(filtered) {
     for (const slide of document.querySelectorAll(DOCUMENT_SLIDE)) {
       const post = slide.closest(FEED_POST);
       const carousel = slide.closest('ul')?.parentElement;
       if (!post || !carousel || !post.contains(carousel)) continue;
       const wrapper = carousel.closest(DOCUMENT_PREVIEW);
       const preview = wrapper && post.contains(wrapper) ? wrapper : carousel;
-      hidden.set(preview, 'document');
+      filtered.set(preview, { label: 'document', action: photoAction });
     }
   }
 
-  function collectNewPositionImages(hidden) {
+  function collectNewPositionImages(filtered) {
     for (const image of document.querySelectorAll(CELEBRATION_IMAGE)) {
       const post = image.closest(FEED_POST);
       if (!post || !hasLabel(post, (label) => label === 'Starting a new position')) continue;
       const artwork = image.closest('figure, picture') ?? image;
-      if ([...hidden.keys()].some((attachment) => attachment.contains(artwork))) continue;
-      hidden.set(artwork, 'photo');
+      if ([...filtered.keys()].some((attachment) => attachment.contains(artwork))) continue;
+      filtered.set(artwork, { label: 'photo', action: newPositionAction });
     }
   }
 
-  function collectPhotoGrids(hidden) {
+  function collectPhotoGrids(filtered) {
     const grids = new Set();
     for (const tile of document.querySelectorAll(PHOTO_TILE)) {
       if (!isPhotoTile(tile)) continue;
@@ -185,7 +214,7 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
       if (grid) grids.add(grid);
     }
     for (const grid of grids) {
-      if (![...grids].some((other) => other !== grid && other.contains(grid))) hidden.set(grid, 'photos');
+      if (![...grids].some((other) => other !== grid && other.contains(grid))) filtered.set(grid, { label: 'photos', action: photoAction });
     }
   }
 
@@ -194,12 +223,12 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
       (element.hostname === location.hostname && element.pathname === location.pathname));
   }
 
-  function collectMedia(selector, label, hidden) {
+  function collectMedia(selector, label, action, filtered) {
     for (const media of document.querySelectorAll(selector)) {
       const scope = media.parentElement?.closest(MEDIA_SCOPE);
       if (!scope || media.parentElement.closest(selector)) continue;
       const wrapper = getSizedMediaWrapper(media, scope, label === 'video');
-      if (![...hidden.keys()].some((attachment) => attachment.contains(wrapper))) hidden.set(wrapper, label);
+      if (![...filtered.keys()].some((attachment) => attachment.contains(wrapper))) filtered.set(wrapper, { label, action });
     }
   }
 
@@ -232,17 +261,13 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
     applyMediaFilters(settings);
     const posts = getPosts();
 
-    posts.forEach((post) => {
-      const filterKey = getFilterKey(post);
-      if (!filterKey) {
-        if (FILTER_KEYS.has(post.dataset.lfrHidden)) clearPostStyle(post, animateFilteredHides);
-        return;
-      }
-
-      const shouldHide = (filterKey === 'suggested' && settings.hideSuggested) || (filterKey === 'promoted' && settings.hidePromoted) || (filterKey === 'promoted-by' && settings.hidePromotedBy);
-      if (shouldHide) applyHiddenPost(post, filterKey, settings, animateFilteredHides);
-      else if (post.dataset.lfrHidden === filterKey) clearPostStyle(post, animateFilteredHides);
-    });
+    const animate = animateFilteredHides && !globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    for (const post of posts) {
+      const type = getFilterKey(post);
+      const action = CleanInFeatures.getFilterAction(settings, FILTER_KEYS[type]);
+      if (action !== 'show') applyPostStyle(post, type, action, animate);
+      else if (Object.hasOwn(FILTER_KEYS, post.dataset.lfrHidden)) clearPostStyle(post, animate);
+    }
   }
 
   function getPosts() {
@@ -256,7 +281,7 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
       'main [data-id*="urn:li:activity"]', '[role="main"] [data-id*="urn:li:activity"]',
       'main [data-urn*="urn:li:activity"]', '[role="main"] [data-urn*="urn:li:activity"]',
     ].forEach((selector) => document.querySelectorAll(selector).forEach((post) => posts.push(post)));
-    return [...new Set(posts)].filter((post) => FILTER_KEYS.has(post.dataset.lfrHidden) || isVisible(post));
+    return [...new Set(posts)].filter((post) => Object.hasOwn(FILTER_KEYS, post.dataset.lfrHidden) || isVisible(post));
   }
 
   function getFilterKey(post) {
@@ -273,32 +298,21 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
     });
   }
 
-  function applyHiddenPost(post, type, settings, animateFilteredHides) {
-    if (post.dataset.lfrHidden === type) {
-      applyPostStyle(post, type, settings, animateFilteredHides);
-      return;
-    }
-    applyPostStyle(post, type, settings, animateFilteredHides);
-  }
-
-  function applyPostStyle(post, type, settings, animateFilteredHides) {
+  function applyPostStyle(post, type, action, animate) {
+    const currentAnimation = postAnimations.get(post);
+    if (currentAnimation?.action === action && post.dataset.lfrHidden === type) return;
+    postAnimations.delete(post);
     post.dataset.lfrHidden = type;
-    if (settings.transparentMode) {
-      const colors = FILTER_STYLES[type] || FILTER_STYLES.promoted;
-      clearAnimationStyles(post);
-      post.style.display = 'block';
+    if (action === 'fade') {
+      const colors = FILTER_STYLES[type];
+      clearStyles(post);
       post.style.opacity = '0.4';
-      post.style.visibility = '';
       post.style.outline = colors[0];
       post.style.backgroundColor = colors[1];
-      post.style.backgroundImage = '';
-      post.style.boxShadow = '';
-      post.style.filter = '';
-      post.style.pointerEvents = '';
       return;
     }
 
-    if (!animateFilteredHides || post.style.display === 'none') {
+    if (!animate || post.style.display === 'none') {
       clearStyles(post);
       post.style.display = 'none';
       return;
@@ -310,35 +324,43 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
     post.style.transition = `height ${FADE_DURATION}ms ease, opacity ${FADE_DURATION}ms ease`;
     post.style.opacity = post.style.opacity || '1';
     post.style.pointerEvents = 'none';
-    requestAnimationFrame(() => {
+    animatePost(post, action, type, () => {
       post.style.height = '0px';
       post.style.opacity = '0';
+    }, () => {
+      clearStyles(post);
+      post.style.display = 'none';
     });
-    setTimeout(() => {
-      if (!settings.transparentMode && post.dataset.lfrHidden) post.style.display = 'none';
-    }, FADE_DURATION + 20);
   }
 
   function clearPostStyle(post, animate) {
+    postAnimations.delete(post);
     delete post.dataset.lfrHidden;
-    if (!animate) {
-      clearStyles(post);
-      return;
-    }
+    clearStyles(post);
+    if (!animate) return;
 
-    post.style.display = '';
     post.style.overflow = 'hidden';
-    post.style.height = '';
     const height = post.scrollHeight;
     post.style.height = '0px';
     post.style.transition = `height ${FADE_DURATION}ms ease, opacity ${FADE_DURATION}ms ease`;
     post.style.opacity = '0';
-    requestAnimationFrame(() => {
+    animatePost(post, 'show', undefined, () => {
       post.style.height = `${height}px`;
       post.style.opacity = '1';
+    }, () => clearAnimationStyles(post));
+  }
+
+  function animatePost(post, action, type, step, finish) {
+    const animation = { action };
+    postAnimations.set(post, animation);
+    const isCurrent = () => postAnimations.get(post) === animation && post.dataset.lfrHidden === type;
+    requestAnimationFrame(() => {
+      if (isCurrent()) step();
     });
     setTimeout(() => {
-      if (!post.dataset.lfrHidden) clearAnimationStyles(post);
+      if (!isCurrent()) return;
+      postAnimations.delete(post);
+      finish();
     }, FADE_DURATION + 20);
   }
 
