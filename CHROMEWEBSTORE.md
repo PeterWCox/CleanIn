@@ -57,8 +57,8 @@ Generated promotional previews matching TLDA’s simple white layout, bold featu
 
 | Asset | Dimensions | File | Status |
 | --- | --- | --- | --- |
-| Small promo tile | 440 × 280 | `store/promo-small-v5.jpg` | Saved to store draft |
-| Marquee promo tile | 1400 × 560 | `store/promo-marquee-v5.jpg` | Saved to store draft |
+| Small promo tile | 440 × 280 | `store/promo-small-v5.jpg` | Submitted with 2.0.0 |
+| Marquee promo tile | 1400 × 560 | `store/promo-marquee-v5.jpg` | Submitted with 2.0.0 |
 
 Both exports are opaque JPEGs. The current v5 pair has a compact header with a slightly larger logo and the free badge at the top right. It omits the subtitle and uses “Hide suggested/promoted posts” and “Hide feed photos & videos”. They use CleanIn’s blue logo and describe current feed, sidebar, photo and video controls.
 
@@ -74,8 +74,8 @@ GitHub Actions: `.github/workflows/build-extension.yml` follows TLDA’s release
 
 | Version | Date | Changes | Status |
 | --- | --- | --- | --- |
-| 2.0.0 | 2026-11-23 | Show/Fade/Hide controls with icons and info tips; media reveal buttons; updated popup; backup and restore; legacy settings support. New-position artwork remains visible. | Draft |
+| 2.0.0 | 2026-11-23 | Show/Fade/Hide controls with icons and info tips; media reveal buttons; updated popup; backup and restore; legacy settings support. New-position artwork remains visible. | Submitted for review; automatic publication |
 
 ## Review notes
 
-Prepare and save the 2.0.0 package and listing as a draft only. Do not submit for review or publish as part of this task. English LinkedIn UI is required; LinkedIn layout changes can affect detection. The retired new-position preference is accepted only for legacy compatibility and has no filtering effect.
+CleanIn 2.0.0 was submitted for review on 2026-11-23 with automatic publication after approval, following explicit user authorization. The dashboard confirmed “Your extension was submitted for review”. English LinkedIn UI is required; LinkedIn layout changes can affect detection. The retired new-position preference is accepted only for legacy compatibility and has no filtering effect.
