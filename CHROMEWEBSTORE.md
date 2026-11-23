@@ -57,10 +57,10 @@ Generated promotional previews matching TLDA’s simple white layout, bold featu
 
 | Asset | Dimensions | File | Status |
 | --- | --- | --- | --- |
-| Small promo tile | 440 × 280 | `store/promo-small-v2.jpg` | Generated; not uploaded |
-| Marquee promo tile | 1400 × 560 | `store/promo-marquee-v2.jpg` | Generated; not uploaded |
+| Small promo tile | 440 × 280 | `store/promo-small-v3.jpg` | Generated; not uploaded |
+| Marquee promo tile | 1400 × 560 | `store/promo-marquee-v3.jpg` | Generated; not uploaded |
 
-Both exports are opaque JPEGs. The current v2 pair omits the subtitle. They use CleanIn’s blue logo and describe current feed, sidebar, photo and video controls.
+Both exports are opaque JPEGs. The current v3 pair omits the subtitle and uses “Hide feed photos & videos”. They use CleanIn’s blue logo and describe current feed, sidebar, photo and video controls.
 
 ## Distribution and developer
 
