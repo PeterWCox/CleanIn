@@ -1,0 +1,68 @@
+name: Build Chrome extension
+
+on:
+  push:
+    branches:
+      - main
+      - codex/dev
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Chrome Web Store ZIP
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Node.js 24
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
+
+      - name: Install Bun 1.4.4
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Chrome extension
+        run: pnpm run build
+        env:
+          CLEANIN_PRODUCTION: '1'
+          CLEANIN_OUT_DIR: dist
+
+      - name: Validate extension files
+        run: |
+          test -f dist/manifest.json
+          version="$(node -p "require('./dist/manifest.json').version")"
+          test "$version" = "$(node -p "require('./public/manifest.json').version")"
+          test "$version" = "$(node -p "require('./package.json').version")"
+          find dist -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          git diff --check
+
+      - name: Create Chrome Web Store ZIP
+        run: |
+          version="$(node -p "require('./dist/manifest.json').version")"
+          mkdir -p "$GITHUB_WORKSPACE/artifacts"
+          cd dist
+          zip -r "$GITHUB_WORKSPACE/artifacts/cleanin-chrome-store-v${version}.zip" . -x "*.DS_Store" "__MACOSX/*" "*.map"
+
+      - name: Publish Chrome Web Store ZIP
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: chrome-store-zip
+          path: artifacts/cleanin-chrome-store-v*.zip
+          if-no-files-found: error
+          compression-level: 0

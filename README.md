@@ -15,7 +15,7 @@ The source code is available if you'd prefer to build it yourself: [https://gith
 ## Docs & store releases
 
 - Chrome Web Store listing copy, permission justifications and version history: [CHROMEWEBSTORE.md](CHROMEWEBSTORE.md).
-- The [GitHub Actions build](https://github.com/PeterWCox/CleanIn/actions/workflows/release.yml) runs on pushes to `codex/dev` and `main`, on pull requests to those branches, or when started manually.
+- The [GitHub Actions build](https://github.com/PeterWCox/CleanIn/actions/workflows/build-extension.yml) runs on pushes to `codex/dev` and `main`, or when started manually.
 - Make and test changes on `codex/dev`, then merge into `main` for release. Keep the version in `public/manifest.json` and `package.json` in sync. The workflow checks both versions before packaging.
 - Download `cleanin-chrome-store-v*.zip` from the successful `main` run and upload it through the Chrome Web Store Developer Dashboard.
 

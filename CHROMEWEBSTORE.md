@@ -58,7 +58,7 @@ Published listing: public, publisher `peter.w.cox`. The published version observ
 
 ## Build and release
 
-GitHub Actions: `.github/workflows/release.yml`. Pushes and pull requests to `main` and `codex/dev`, plus manual runs, install with a frozen pnpm lockfile, run tests and type checking, build a production package, check version consistency and JavaScript syntax, then upload a versioned ZIP artifact. Store upload is manual and does not submit the item for review.
+GitHub Actions: `.github/workflows/build-extension.yml` follows TLDA’s release workflow: pushes to `main` and `codex/dev`, plus manual runs, install with a frozen pnpm lockfile, build a production package, check version consistency and JavaScript syntax, create a versioned ZIP, then upload it inside the `chrome-store-zip` artifact. The job has a 15-minute timeout and action versions are pinned to commit hashes. Run tests and type checking before pushing; they are separate from the release packaging flow. Store upload is manual and does not submit the item for review.
 
 ## Version history
 
