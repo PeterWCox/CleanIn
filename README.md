@@ -6,7 +6,7 @@ CleanIn is a simple Chrome extension that hides unwanted feed content masqueradi
 2. Promoted and Promoted by posts
 3. Sidebar content like News and Puzzles
 
-They are hidden by default, but you can show them as transparent in the General settings if you prefer (dimmed on the page instead of removed).
+Choose Show, Fade or Hide for each filter. You can also control photo and video attachments, and back up or restore your preferences. Existing preferences carry over when updating.
 
 ![CleanIn demo](screenshots/cleanin-demo.png)
 
@@ -14,9 +14,9 @@ The source code is available if you'd prefer to build it yourself: [https://gith
 
 ## Docs & store releases
 
-- Chrome Web Store form copy and justifications: [docs/chrome-web-store-privacy-answers.md](docs/chrome-web-store-privacy-answers.md) (see also [docs/README.md](docs/README.md)).
-- The [GitHub Actions build](https://github.com/PeterWCox/CleanIn/actions/workflows/release.yml) runs on pushes to `codex/dev` and `main`, or when started manually.
-- Make and test changes on `codex/dev`, then merge into `main` for release. Set the extension version in `public/manifest.json`.
+- Chrome Web Store listing copy, permission justifications and version history: [CHROMEWEBSTORE.md](CHROMEWEBSTORE.md).
+- The [GitHub Actions build](https://github.com/PeterWCox/CleanIn/actions/workflows/release.yml) runs on pushes to `codex/dev` and `main`, on pull requests to those branches, or when started manually.
+- Make and test changes on `codex/dev`, then merge into `main` for release. Keep the version in `public/manifest.json` and `package.json` in sync. The workflow checks both versions before packaging.
 - Download `cleanin-chrome-store-v*.zip` from the successful `main` run and upload it through the Chrome Web Store Developer Dashboard.
 
 ## Developer instructions
@@ -47,6 +47,6 @@ in `/Users/petercox/Downloads/extensions/cleanin-dev` by default.
 
 ## Backups
 
-Settings includes shared **Backup and restore** controls for all seven saved preferences, including both legacy promoted flags and transparent mode. Import requires confirmation and preserves preferences omitted by a partial backup. Failed restores can be retried.
+Settings includes shared **Backup and restore** controls for saved preferences, including per-filter Show/Fade/Hide choices and legacy promoted flags and transparent mode. Import requires confirmation and preserves preferences omitted by a partial backup. Failed restores can be retried.
 
-All extensions use `@petercoxhatesbridges/extension-ui@0.2.3` and pnpm 12.15.0. The versioned backup format rejects files belonging to another extension. Development and store builds of the same extension can exchange backups.
+CleanIn uses the vendored `@petercoxhatesbridges/extension-ui@0.2.16` package and pnpm 12.15.0. The versioned backup format rejects files belonging to another extension. Development and store builds of the same extension can exchange backups.
