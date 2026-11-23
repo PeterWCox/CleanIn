@@ -51,7 +51,16 @@ The existing dashboard has no data-collection categories selected and all three 
 
 ## Graphics and assets
 
-The manifest references existing icons at 16, 32, 48, 64 and 128 pixels. The existing store icon and screenshot are retained. Review the screenshot for relevance before submission; this update does not generate replacement promotional images.
+The manifest references existing icons at 16, 32, 48, 64 and 128 pixels. The existing store icon and screenshot are retained. Review the screenshot for relevance before submission.
+
+Generated promotional previews matching TLDA’s simple white layout, bold feature text and free badge:
+
+| Asset | Dimensions | File | Status |
+| --- | --- | --- | --- |
+| Small promo tile | 440 × 280 | `store/promo-small-v1.jpg` | Generated; not uploaded |
+| Marquee promo tile | 1400 × 560 | `store/promo-marquee-v1.jpg` | Generated; not uploaded |
+
+Both exports are opaque JPEGs. They use CleanIn’s blue logo and describe current feed, sidebar, photo and video controls.
 
 ## Distribution and developer
 
