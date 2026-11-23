@@ -57,8 +57,8 @@ Generated promotional previews matching TLDA’s simple white layout, bold featu
 
 | Asset | Dimensions | File | Status |
 | --- | --- | --- | --- |
-| Small promo tile | 440 × 280 | `store/promo-small-v5.jpg` | Generated; not uploaded |
-| Marquee promo tile | 1400 × 560 | `store/promo-marquee-v5.jpg` | Generated; not uploaded |
+| Small promo tile | 440 × 280 | `store/promo-small-v5.jpg` | Saved to store draft |
+| Marquee promo tile | 1400 × 560 | `store/promo-marquee-v5.jpg` | Saved to store draft |
 
 Both exports are opaque JPEGs. The current v5 pair has a compact header with a slightly larger logo and the free badge at the top right. It omits the subtitle and uses “Hide suggested/promoted posts” and “Hide feed photos & videos”. They use CleanIn’s blue logo and describe current feed, sidebar, photo and video controls.
 
