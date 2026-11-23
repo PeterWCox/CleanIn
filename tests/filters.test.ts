@@ -82,7 +82,7 @@ it("fades media independently and preserves click-to-show for collapsed attachme
   document.body.innerHTML = `<main data-component-type="LazyColumn">
     <article><p>Example photo</p><figure id="photo"><img src="/feedshare-shrink/photo.jpg"></figure></article>
     <article><p>Example video</p><video id="video"></video></article>
-    <article><p>Starting a new position</p><figure id="artwork"><img alt="View celebration image"></figure></article>
+    <article><p>Starting a new position</p><figure id="artwork" class="update-components-image"><img alt="View celebration image"></figure></article>
   </main>`;
   const { hideFeed } = loadFilters();
   try {
@@ -92,7 +92,7 @@ it("fades media independently and preserves click-to-show for collapsed attachme
         filterActions: {
           hidePhotos: "fade",
           hideVideos: "hide",
-          hideNewPositionPosts: "show",
+          hideNewPositionPosts: "hide",
         },
       }),
     );
@@ -114,14 +114,18 @@ it("fades media independently and preserves click-to-show for collapsed attachme
 
     hideFeed.apply(
       readSettings({
-        filterActions: { hideNewPositionPosts: "fade", hideVideos: "hide" },
+        filterActions: {
+          hideNewPositionPosts: "fade",
+          hideVideos: "hide",
+          hidePhotos: "hide",
+        },
       }),
     );
     expect(element("photo").hasAttribute("data-cleanin-faded-media")).toBe(
       false,
     );
     expect(element("artwork").hasAttribute("data-cleanin-faded-media")).toBe(
-      true,
+      false,
     );
     expect(element("video").previousElementSibling).toBe(marker);
     expect(marker.getAttribute("aria-expanded")).toBe("true");

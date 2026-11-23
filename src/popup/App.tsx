@@ -13,7 +13,6 @@ import {
   Settings as SettingsIcon,
   Sparkles,
   Megaphone,
-  BriefcaseBusiness,
   Image,
   Video,
   Newspaper,
@@ -148,11 +147,6 @@ export function App({ store, version, beta, initialTab = "feed" }: AppProps) {
               "hidePromoted",
               "hidePromotedBy",
             ])}
-            {row(
-              "New position images",
-              "hideNewPositionPosts",
-              <BriefcaseBusiness />,
-            )}
             {row("Photos", "hidePhotos", <Image />)}
             {row("Videos", "hideVideos", <Video />)}
           </TabsContent>

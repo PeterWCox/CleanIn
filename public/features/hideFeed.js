@@ -36,7 +36,7 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   const DOCUMENT_SLIDE = 'img:is([src*="/feedshare-document-images"], [src*="/ads-document-images"], [srcset*="/feedshare-document-images"], [srcset*="/ads-document-images"])';
   const DOCUMENT_PREVIEW = 'div:has(> div > button[aria-label="Full screen" i])';
   const EVENT_COVER = 'img:is([src*="/video-liveannouncement-"], [srcset*="/video-liveannouncement-"])';
-  const MEDIA = `${PHOTO}, ${VIDEO}, ${PHOTO_TILE}, ${PLAY_VIDEO}, ${CELEBRATION_IMAGE}, ${MORE_PHOTOS_LABEL}, ${DOCUMENT_SLIDE}, ${EVENT_COVER}`;
+  const MEDIA = `${PHOTO}, ${VIDEO}, ${PHOTO_TILE}, ${PLAY_VIDEO}, ${MORE_PHOTOS_LABEL}, ${DOCUMENT_SLIDE}, ${EVENT_COVER}`;
   const MARKER = 'data-cleanin-media-marker';
   const HIDDEN_MEDIA = 'data-cleanin-hidden-media';
   const FADED_MEDIA = 'data-cleanin-faded-media';
@@ -47,18 +47,15 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   let mediaFrame = null;
   let photoAction = 'show';
   let videoAction = 'show';
-  let newPositionAction = 'show';
 
   function applyMediaFilters(settings) {
     const photos = CleanInFeatures.getFilterAction(settings, 'hidePhotos', false);
     const videos = CleanInFeatures.getFilterAction(settings, 'hideVideos', false);
-    const newPositions = CleanInFeatures.getFilterAction(settings, 'hideNewPositionPosts', false);
-    if (photos === photoAction && videos === videoAction && newPositions === newPositionAction) return;
+    if (photos === photoAction && videos === videoAction) return;
     photoAction = photos;
     videoAction = videos;
-    newPositionAction = newPositions;
 
-    if ([photos, videos, newPositions].some((action) => action !== 'show')) {
+    if ([photos, videos].some((action) => action !== 'show')) {
       if (!mediaObserver) {
         const sheet = new CSSStyleSheet();
         sheet.replaceSync(`
@@ -126,7 +123,6 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
       collectMedia(PHOTO, 'photo', photoAction, filtered);
       collectMedia(`:is(figure:has(> ${EVENT_COVER}), ${EVENT_COVER})`, 'photo', photoAction, filtered);
     }
-    if (newPositionAction !== 'show') collectNewPositionImages(filtered);
 
     for (const media of fadedMedia) {
       if (filtered.get(media)?.action === 'fade') continue;
@@ -181,16 +177,6 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
     }
   }
 
-  function collectNewPositionImages(filtered) {
-    for (const image of document.querySelectorAll(CELEBRATION_IMAGE)) {
-      const post = image.closest(FEED_POST);
-      if (!post || !hasLabel(post, (label) => label === 'Starting a new position')) continue;
-      const artwork = image.closest('figure, picture') ?? image;
-      if ([...filtered.keys()].some((attachment) => attachment.contains(artwork))) continue;
-      filtered.set(artwork, { label: 'photo', action: newPositionAction });
-    }
-  }
-
   function collectPhotoGrids(filtered) {
     const grids = new Set();
     for (const tile of document.querySelectorAll(PHOTO_TILE)) {
@@ -218,12 +204,13 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
   }
 
   function isPhotoTile(element) {
-    return element.matches(PHOTO_TILE) && (element.querySelector(PHOTO_IMAGE) ||
+    return !element.querySelector(CELEBRATION_IMAGE) && element.matches(PHOTO_TILE) && (element.querySelector(PHOTO_IMAGE) ||
       (element.hostname === location.hostname && element.pathname === location.pathname));
   }
 
   function collectMedia(selector, label, action, filtered) {
     for (const media of document.querySelectorAll(selector)) {
+      if (media.matches(CELEBRATION_IMAGE) || media.querySelector(CELEBRATION_IMAGE)) continue;
       const scope = media.parentElement?.closest(MEDIA_SCOPE);
       if (!scope || media.parentElement.closest(selector)) continue;
       const wrapper = getSizedMediaWrapper(media, scope, label === 'video');

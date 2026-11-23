@@ -70,7 +70,7 @@ describe("preferences persistence", () => {
     expect(getFilterAction(settings, "hidePromoted")).toBe("fade");
     expect(getFilterAction(settings, "hidePromotedBy")).toBe("show");
     expect(getFilterAction(settings, "hidePhotos")).toBe("hide");
-    expect(getFilterAction(settings, "hideNewPositionPosts")).toBe("hide");
+    expect(getFilterAction(settings, "hideNewPositionPosts")).toBe("show");
     expect(getFilterAction(settings, "hidePuzzles")).toBe("hide");
     expect(settings.filterActions).toEqual({ hidePuzzles: "hide" });
   });

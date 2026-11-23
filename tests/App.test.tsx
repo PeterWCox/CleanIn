@@ -12,7 +12,7 @@ function selectValue(element: HTMLElement) {
 it("shows the feed, sidebar, and settings controls with a fixed version and footer", async () => {
   const view = render(<App store={demoStore()} version="1.5.2" beta />);
   const user = userEvent.setup();
-  await waitFor(() => expect(view.getAllByRole("combobox")).toHaveLength(5));
+  await waitFor(() => expect(view.getAllByRole("combobox")).toHaveLength(4));
   expect(
     selectValue(view.getByRole("combobox", { name: "Suggested posts" })),
   ).toBe("hide");

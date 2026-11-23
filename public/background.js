@@ -118,7 +118,7 @@ function notifyLinkedInTabs(settings) {
 
 const defaultSettings = {
   hideSuggested: true,
-  hideNewPositionPosts: true,
+  hideNewPositionPosts: false, // Retired; retained for legacy backup compatibility.
   hidePromoted: true,
   hidePromotedBy: true,
   hidePhotos: false,

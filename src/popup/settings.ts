@@ -1,6 +1,6 @@
 const filterDefaults = {
   hideSuggested: true,
-  hideNewPositionPosts: true,
+  hideNewPositionPosts: false, // Retired; retained for legacy backup compatibility.
   hidePromoted: true,
   hidePromotedBy: true,
   hidePhotos: false,
@@ -47,14 +47,13 @@ export function getFilterAction(
   settings: Settings,
   key: FilterKey,
 ): FilterAction {
+  if (key === "hideNewPositionPosts") return "show";
   const override = settings.filterActions[key];
   if (override) return override;
   if (!settings[key]) return "show";
   // Legacy transparent mode only applied to cards, leaving attachments collapsed.
   const attachment =
-    key === "hidePhotos" ||
-    key === "hideVideos" ||
-    key === "hideNewPositionPosts";
+    key === "hidePhotos" || key === "hideVideos";
   return settings.transparentMode && !attachment ? "fade" : "hide";
 }
 
