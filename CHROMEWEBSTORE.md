@@ -18,7 +18,8 @@ CleanIn is a simple Chrome extension that hides unwanted LinkedIn content like:
 1. Suggested posts
 2. Promoted and Promoted By posts
 3. Sidebar content like News, Puzzles and Ads
-4. Photo and video attachments
+4. Photos in posts and comments
+5. Videos in posts and comments
 
 Choose Show, Fade or Hide separately for each filter. Fade dims content instead of removing it. Hidden photos and videos have a small reveal button so you can open them when you want.
 
