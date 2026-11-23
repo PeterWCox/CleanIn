@@ -82,7 +82,6 @@ globalThis.CleanInFeatures.hideFeed = globalThis.CleanInFeatures.hideFeed || (()
           }
           [${MARKER}]:hover { background: ButtonFace; }
           [${MARKER}]:focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
-          [${MARKER}][aria-expanded="true"] { inline-size: auto; block-size: auto; }
         `);
         document.adoptedStyleSheets.push(sheet);
         mediaObserver = new MutationObserver((records) => {
